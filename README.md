@@ -1,6 +1,3 @@
-Apologies for the confusion earlier. Here is the full content in proper code format that you can directly copy and paste into your `README.md` file:
-
-```md
 # Knowledge Graph Project
 
 This project is designed to work with knowledge graphs using various Python tools and libraries. The environment for the project is managed using Conda, and this `README.md` will guide you through the steps to set up and use the project.
