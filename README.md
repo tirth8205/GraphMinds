@@ -30,62 +30,117 @@ Evaluations demonstrate GraphMinds' superiority in analyzing large, unstructured
 - **Ollama Client**: For interacting with the LLM.
 - **Pandas**: For data manipulation and handling relationships.
 
-Apologies for that! If you are using an `environment.yml` file instead of a `requirements.txt` file to manage dependencies, you'll want to update the `README.md` accordingly. Here's how you can adjust the installation instructions to reflect that you're using `conda` and the `environment.yml` file.
-
 
 ## Installation
 
-1. Clone the repository:
+### 1. Clone the repository:
    ```bash
    git clone https://github.com/tirth8205/GraphMinds.git
    cd GraphMinds
    ```
 
-2. Create and activate the Conda environment from the `environment.yml` file:
+### 2. Create and activate the Conda environment from the `environment.yml` file:
    ```bash
    conda env create -f environment.yml
    conda activate graphminds
    ```
 
-3. Verify the installation by checking the installed packages:
+### 3. Verify the installation by checking the installed packages:
    ```bash
    conda list
    ```
 
+### 4. Setting Up Ollama
+
+The Ollama API provides the necessary interface for interacting with the LLMs (e.g., `mistral-openorca` and `zephyr:7b`). The Zephyr model is a series of fine-tuned versions of the Mistral and Mixtral models that are trained to act as helpful assistants. Zephyr is a 7B parameter model, distributed under the Apache license, available in both instruction-following and text completion variants.
+
+To use the Ollama API:
+
+1. Download and install the Ollama 5.1.4 API from the official [Ollama website](https://ollama.com/download).
+
+2. After installing the API, verify the installation using the following command to check the version:
+
+   ```bash
+   ollama version
+   ```
+
+3. Once installed, you can download the required models like `mistral-openorca` and `zephyr:7b` using Ollama's built-in commands:
+
+   ```bash
+   ollama pull mistral-openorca
+   ollama pull zephyr:7b
+   ```
+
+4. Ensure that the models are correctly installed and ready for interaction:
+
+   ```bash
+   ollama list
+   ```
+
+   This will list all the available models that are ready to use with the project.
+
+### 5. Launch JupyterLab (Optional):
+   If you're planning to work in JupyterLab, you can start it with:
+   ```bash
+   jupyter lab
+   ```
+
+### 6. Deactivating the Environment:
+   Once you're done, you can deactivate the Conda environment by running:
+   ```bash
+   conda deactivate
+   ```
+
+### Notes:
+- If you need to install additional packages, you can do so within the activated environment using `conda install` or `pip install`.
+- The Python version is not fixed in the environment file, so the latest compatible version of Python will be installed when the environment is created.
+
+
 ## Usage
 
-1. **Prepare Data**: Ensure that the relationships and contexts from your PDF or unstructured data are represented in a DataFrame containing nodes, edges, and chunk IDs for mapping entities.
+1. **Set Up the Environment**: After setting up the environment, open the `extract_graph.ipynb` Jupyter notebook and ensure the kernel is set to **Knowledge Graph** (the environment you just created).
 
-2. **Add Embeddings to Graph Data**:
-   Use the `add_embeddings_to_dfg` function to generate embeddings for the combined node and edge data.
+2. **Prepare Data**: 
+   - Place your PDF file in the `input/` folder (PDFs only at the moment).
+   - Open the notebook and update the file name in the script:
+
    ```python
-   dfg = add_embeddings_to_dfg(dfg)
+   # Load the PDF document
+   loader = PyPDFLoader("input/#FileName")  # Replace #FileName with the name of your PDF file
+   documents = loader.load()  # Load the content of the PDF
    ```
 
-3. **Start Interactive Querying**:
-   Use the `interactive_pdf_query` function to interactively query the document and retrieve relevant relationships.
+3. **Run the Notebook**: Execute the cells to process the PDF and generate the knowledge graph. Once the processing is done, the system will generate an interactive HTML file for querying the relationships within the document.
+
+
+4. **Example Query Script**:
+   You can also run a predefined script to query the document:
+
    ```python
-   interactive_pdf_query(dfg, df)
+   # Example query
+   query = "#ENTER YOUR QUERY HERE"  # Replace with your query
+   response = answer_query_with_all_relationships(query, contentreplacedforchunk_dfg, df)
+
+   # Print the response
+   print(response)
    ```
 
-4. **Example Query**: You can query relationships interactively:
-   ```bash
-   Ask your question: "What is the relationship between entity X and entity Y?"
+5. **Alternatively, Start a Chat**: You can initiate an interactive chat as defined in the last cell of the notebook:
+
+   ```python
+   while True:
+       # Get the user's query
+       query = input("Ask your question: ").strip()
+       
+       # Check if the user wants to exit
+       if query.lower() in ['exit', 'quit']:
+           print("Ending the interaction. Goodbye!")
+           break
    ```
 
-   The system will process the query using embeddings and an LLM to generate a meaningful answer.
+   The script will continuously prompt for questions until you type `exit` or `quit`.
 
-## Example Code
 
-Here is a quick example of how to set up and run the query system:
-
-```python
-# Step 1: Add embeddings to your graph data
-dfg = add_embeddings_to_dfg(dfg)
-
-# Step 2: Start the interactive session for querying
-interactive_pdf_query(dfg, df)
-```
 
 ## System Architecture
 
@@ -97,12 +152,6 @@ interactive_pdf_query(dfg, df)
 ## Key Innovation
 
 The core of GraphMinds lies in its ability to leverage knowledge graphs and integrate indirect relationships into its analysis. By combining LLMs with structured data from knowledge graphs, GraphMinds enhances the accuracy of insights generated from unstructured and fragmented information.
-
-## Future Work
-
-- **Automated PDF Parsing**: Integrate tools to automatically parse and extract relationships from PDF files.
-- **Support for Additional LLM Models**: Expand support for more advanced LLMs to improve the quality and speed of answer generation.
-- **Enhanced Visualization**: Improve real-time graph visualizations during interactive querying.
 
 ## License
 
