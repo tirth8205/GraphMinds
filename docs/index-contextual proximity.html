@@ -1,0 +1,1083 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 900px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 900px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="30,000 people">30,000 people</option>
+                                
+                                    <option value="donbas">donbas</option>
+                                
+                                    <option value="ocgs">ocgs</option>
+                                
+                                    <option value="ukraine">ukraine</option>
+                                
+                                    <option value="427 km front line">427 km front line</option>
+                                
+                                    <option value="most densely populated and industrially productive part of the country">most densely populated and industrially productive part of the country</option>
+                                
+                                    <option value="ace">ace</option>
+                                
+                                    <option value="anti-corruption">anti-corruption</option>
+                                
+                                    <option value="anti-corruption evidence">anti-corruption evidence</option>
+                                
+                                    <option value="fcdo">fcdo</option>
+                                
+                                    <option value="global integrity">global integrity</option>
+                                
+                                    <option value="government">government</option>
+                                
+                                    <option value="research programme">research programme</option>
+                                
+                                    <option value="serious organized crime">serious organized crime</option>
+                                
+                                    <option value="soas">soas</option>
+                                
+                                    <option value="soc ace">soc ace</option>
+                                
+                                    <option value="stakeholders">stakeholders</option>
+                                
+                                    <option value="university of birmingham">university of birmingham</option>
+                                
+                                    <option value="addiction">addiction</option>
+                                
+                                    <option value="casinos">casinos</option>
+                                
+                                    <option value="loan sharking">loan sharking</option>
+                                
+                                    <option value="money laundering">money laundering</option>
+                                
+                                    <option value="organized crime">organized crime</option>
+                                
+                                    <option value="overseas markets">overseas markets</option>
+                                
+                                    <option value="protection racketeering">protection racketeering</option>
+                                
+                                    <option value="regional budget">regional budget</option>
+                                
+                                    <option value="unlikely">unlikely</option>
+                                
+                                    <option value="vice of every kind">vice of every kind</option>
+                                
+                                    <option value="administration">administration</option>
+                                
+                                    <option value="kiev">kiev</option>
+                                
+                                    <option value="advance militarily">advance militarily</option>
+                                
+                                    <option value="mila kovsky">mila kovsky</option>
+                                
+                                    <option value="aggression">aggression</option>
+                                
+                                    <option value="conflict">conflict</option>
+                                
+                                    <option value="russia">russia</option>
+                                
+                                    <option value="amro">amro</option>
+                                
+                                    <option value="cadlr">cadlr</option>
+                                
+                                    <option value="eu">eu</option>
+                                
+                                    <option value="nabu">nabu</option>
+                                
+                                    <option value="soc">soc</option>
+                                
+                                    <option value="annexation of crimea">annexation of crimea</option>
+                                
+                                    <option value="conflict in eastern ukraine">conflict in eastern ukraine</option>
+                                
+                                    <option value="corruption">corruption</option>
+                                
+                                    <option value="crime">crime</option>
+                                
+                                    <option value="anti-corruption bodies (napc, nabu, sapo, sbi, amro)">anti-corruption bodies (napc, nabu, sapo, sbi, amro)</option>
+                                
+                                    <option value="e -declaration system">e -declaration system</option>
+                                
+                                    <option value="electronic system for state procurement tenders">electronic system for state procurement tenders</option>
+                                
+                                    <option value="former president viktor yanukovych">former president viktor yanukovych</option>
+                                
+                                    <option value="gas sales from russia">gas sales from russia</option>
+                                
+                                    <option value="state -owned enterprises (soes)">state -owned enterprises (soes)</option>
+                                
+                                    <option value="arms trafficking">arms trafficking</option>
+                                
+                                    <option value="bureau of international narcotics and law enforcement affairs">bureau of international narcotics and law enforcement affairs</option>
+                                
+                                    <option value="home office">home office</option>
+                                
+                                    <option value="international narcotics control strategy report">international narcotics control strategy report</option>
+                                
+                                    <option value="international narcotics control strategy report (ussd binle a2)">international narcotics control strategy report (ussd binle a2)</option>
+                                
+                                    <option value="transparency international">transparency international</option>
+                                
+                                    <option value="bashmaki">bashmaki</option>
+                                
+                                    <option value="salem">salem</option>
+                                
+                                    <option value="black sea smuggling routes">black sea smuggling routes</option>
+                                
+                                    <option value="smuggling">smuggling</option>
+                                
+                                    <option value="business elites">business elites</option>
+                                
+                                    <option value="political patronage">political patronage</option>
+                                
+                                    <option value="dpr">dpr</option>
+                                
+                                    <option value="lpr">lpr</option>
+                                
+                                    <option value="napc">napc</option>
+                                
+                                    <option value="ngca">ngca</option>
+                                
+                                    <option value="ocg">ocg</option>
+                                
+                                    <option value="sapo">sapo</option>
+                                
+                                    <option value="sbi">sbi</option>
+                                
+                                    <option value="ubo">ubo</option>
+                                
+                                    <option value="close ties to organised crime">close ties to organised crime</option>
+                                
+                                    <option value="crimea">crimea</option>
+                                
+                                    <option value="oligarchs">oligarchs</option>
+                                
+                                    <option value="closer ties were even forged between russian ocgs and tho se in ukraine">closer ties were even forged between russian ocgs and tho se in ukraine</option>
+                                
+                                    <option value="coal">coal</option>
+                                
+                                    <option value="trade">trade</option>
+                                
+                                    <option value="coal industry">coal industry</option>
+                                
+                                    <option value="cocaine">cocaine</option>
+                                
+                                    <option value="ukrainian seaports and airports">ukrainian seaports and airports</option>
+                                
+                                    <option value="donbas conflict">donbas conflict</option>
+                                
+                                    <option value="eastern ukraine">eastern ukraine</option>
+                                
+                                    <option value="evidence review">evidence review</option>
+                                
+                                    <option value="global crime scene">global crime scene</option>
+                                
+                                    <option value="iffat idris">iffat idris</option>
+                                
+                                    <option value="organized criminal groups">organized criminal groups</option>
+                                
+                                    <option value="resilience">resilience</option>
+                                
+                                    <option value="separatist forces">separatist forces</option>
+                                
+                                    <option value="transnational crime">transnational crime</option>
+                                
+                                    <option value="donbas region">donbas region</option>
+                                
+                                    <option value="conflict analysis">conflict analysis</option>
+                                
+                                    <option value="gsdrc">gsdrc</option>
+                                
+                                    <option value="international development department">international development department</option>
+                                
+                                    <option value="research fellow">research fellow</option>
+                                
+                                    <option value="economic blockade">economic blockade</option>
+                                
+                                    <option value="economy">economy</option>
+                                
+                                    <option value="political elites/oligarchs">political elites/oligarchs</option>
+                                
+                                    <option value="western sanctions">western sanctions</option>
+                                
+                                    <option value="western structures">western structures</option>
+                                
+                                    <option value="connection between crime and the russian state">connection between crime and the russian state</option>
+                                
+                                    <option value="crimean annexation">crimean annexation</option>
+                                
+                                    <option value="salem organised criminal group">salem organised criminal group</option>
+                                
+                                    <option value="criminality">criminality</option>
+                                
+                                    <option value="crisis in ukraine">crisis in ukraine</option>
+                                
+                                    <option value="deep internal divisions">deep internal divisions</option>
+                                
+                                    <option value="donbas regional business oligarchs">donbas regional business oligarchs</option>
+                                
+                                    <option value="drug trafficking routes">drug trafficking routes</option>
+                                
+                                    <option value="economic situation">economic situation</option>
+                                
+                                    <option value="elderly residents">elderly residents</option>
+                                
+                                    <option value="euromaidan protests">euromaidan protests</option>
+                                
+                                    <option value="functioning of the state">functioning of the state</option>
+                                
+                                    <option value="gazprom">gazprom</option>
+                                
+                                    <option value="global money laundering centre">global money laundering centre</option>
+                                
+                                    <option value="government salaries">government salaries</option>
+                                
+                                    <option value="government-controlled territory">government-controlled territory</option>
+                                
+                                    <option value="heroin">heroin</option>
+                                
+                                    <option value="hostilities in donbas">hostilities in donbas</option>
+                                
+                                    <option value="humanitarian aid">humanitarian aid</option>
+                                
+                                    <option value="icg (2017)">icg (2017)</option>
+                                
+                                    <option value="impunity">impunity</option>
+                                
+                                    <option value="kickbacks, sweetheart deals, and attrition of construction materials">kickbacks, sweetheart deals, and attrition of construction materials</option>
+                                
+                                    <option value="military action in eastern ukraine">military action in eastern ukraine</option>
+                                
+                                    <option value="moscow">moscow</option>
+                                
+                                    <option value="moscow -based crime networks">moscow -based crime networks</option>
+                                
+                                    <option value="odessa">odessa</option>
+                                
+                                    <option value="ongoing conflict">ongoing conflict</option>
+                                
+                                    <option value="organised crime">organised crime</option>
+                                
+                                    <option value="organised criminal groups">organised criminal groups</option>
+                                
+                                    <option value="organized criminals">organized criminals</option>
+                                
+                                    <option value="political connections">political connections</option>
+                                
+                                    <option value="population">population</option>
+                                
+                                    <option value="pyramidal nature of state capture">pyramidal nature of state capture</option>
+                                
+                                    <option value="rule of law index">rule of law index</option>
+                                
+                                    <option value="russian/crimea">russian/crimea</option>
+                                
+                                    <option value="senior officials">senior officials</option>
+                                
+                                    <option value="sevastopol">sevastopol</option>
+                                
+                                    <option value="simferopol">simferopol</option>
+                                
+                                    <option value="smuggling hub">smuggling hub</option>
+                                
+                                    <option value="social programs">social programs</option>
+                                
+                                    <option value="state weakening">state weakening</option>
+                                
+                                    <option value="transnational organized crime syndicates">transnational organized crime syndicates</option>
+                                
+                                    <option value="transparency">transparency</option>
+                                
+                                    <option value="violent offences">violent offences</option>
+                                
+                                    <option value="yanukovych">yanukovych</option>
+                                
+                                    <option value="yanukovych’s administration">yanukovych’s administration</option>
+                                
+                                    <option value="yanukovych’s party of the regions">yanukovych’s party of the regions</option>
+                                
+                                    <option value="crime prevention mechanisms">crime prevention mechanisms</option>
+                                
+                                    <option value="information technologies">information technologies</option>
+                                
+                                    <option value="development funds">development funds</option>
+                                
+                                    <option value="embezzlement and corruption for russian and crimean ocgs">embezzlement and corruption for russian and crimean ocgs</option>
+                                
+                                    <option value="gangsters">gangsters</option>
+                                
+                                    <option value="heavily dependent on organised crime">heavily dependent on organised crime</option>
+                                
+                                    <option value="increasingly dominant within crimea">increasingly dominant within crimea</option>
+                                
+                                    <option value="non -slavic gangs">non -slavic gangs</option>
+                                
+                                    <option value="opportunity for embezzlement and corruption">opportunity for embezzlement and corruption</option>
+                                
+                                    <option value="russian connection to criminalization">russian connection to criminalization</option>
+                                
+                                    <option value="seizing property belonging to pro -">seizing property belonging to pro -</option>
+                                
+                                    <option value="ukrainian amber">ukrainian amber</option>
+                                
+                                    <option value="viktor medvedchuk">viktor medvedchuk</option>
+                                
+                                    <option value="crimea's annexation">crimea's annexation</option>
+                                
+                                    <option value="ukraine's sovereignty">ukraine's sovereignty</option>
+                                
+                                    <option value="crimea's annexation on, police and russia’s federal security force (fsb)">crimea's annexation on, police and russia’s federal security force (fsb)</option>
+                                
+                                    <option value="local organised criminal groups">local organised criminal groups</option>
+                                
+                                    <option value="crimea's criminal and political elites">crimea's criminal and political elites</option>
+                                
+                                    <option value="enrichment">enrichment</option>
+                                
+                                    <option value="organised criminal groups in crimea and russian political elites">organised criminal groups in crimea and russian political elites</option>
+                                
+                                    <option value="organised criminal networks in russia">organised criminal networks in russia</option>
+                                
+                                    <option value="sergei aksyonov">sergei aksyonov</option>
+                                
+                                    <option value="crimean government">crimean government</option>
+                                
+                                    <option value="illegally seizing">illegally seizing</option>
+                                
+                                    <option value="criminals as agents and allies">criminals as agents and allies</option>
+                                
+                                    <option value="crony capitalism">crony capitalism</option>
+                                
+                                    <option value="icg">icg</option>
+                                
+                                    <option value="cyprus">cyprus</option>
+                                
+                                    <option value="latvia">latvia</option>
+                                
+                                    <option value="divide">divide</option>
+                                
+                                    <option value="donetsk">donetsk</option>
+                                
+                                    <option value="donetsk region">donetsk region</option>
+                                
+                                    <option value="gangs">gangs</option>
+                                
+                                    <option value="highest level of criminal activity">highest level of criminal activity</option>
+                                
+                                    <option value="homicides across ukraine">homicides across ukraine</option>
+                                
+                                    <option value="legal nihilism">legal nihilism</option>
+                                
+                                    <option value="luhansk">luhansk</option>
+                                
+                                    <option value="political groups">political groups</option>
+                                
+                                    <option value="prisons">prisons</option>
+                                
+                                    <option value="prisons and labour colonies">prisons and labour colonies</option>
+                                
+                                    <option value="rule of law">rule of law</option>
+                                
+                                    <option value="russia backing">russia backing</option>
+                                
+                                    <option value="russia-based insurgency">russia-based insurgency</option>
+                                
+                                    <option value="separatists installed by the krem lin">separatists installed by the krem lin</option>
+                                
+                                    <option value="significant structural factors driving insurgency">significant structural factors driving insurgency</option>
+                                
+                                    <option value="structural factors">structural factors</option>
+                                
+                                    <option value="total crime">total crime</option>
+                                
+                                    <option value="trench war">trench war</option>
+                                
+                                    <option value="ukraine's gangsters">ukraine's gangsters</option>
+                                
+                                    <option value="ukraine's political and economic leaders">ukraine's political and economic leaders</option>
+                                
+                                    <option value="weak governance">weak governance</option>
+                                
+                                    <option value="putin">putin</option>
+                                
+                                    <option value="mines">mines</option>
+                                
+                                    <option value="political elites">political elites</option>
+                                
+                                    <option value="pro-russia ukrainian politicians">pro-russia ukrainian politicians</option>
+                                
+                                    <option value="dr iffat idris">dr iffat idris</option>
+                                
+                                    <option value="drug sales">drug sales</option>
+                                
+                                    <option value="rise in organized crime in rest of ukraine">rise in organized crime in rest of ukraine</option>
+                                
+                                    <option value="international sanctions">international sanctions</option>
+                                
+                                    <option value="mafia state">mafia state</option>
+                                
+                                    <option value="regular russian army">regular russian army</option>
+                                
+                                    <option value="ukrainian government">ukrainian government</option>
+                                
+                                    <option value="economic prosperity">economic prosperity</option>
+                                
+                                    <option value="economic recession">economic recession</option>
+                                
+                                    <option value="embezzlement">embezzlement</option>
+                                
+                                    <option value="russian development funds">russian development funds</option>
+                                
+                                    <option value="europe">europe</option>
+                                
+                                    <option value="expropriation">expropriation</option>
+                                
+                                    <option value="ihor kolomoyskiy">ihor kolomoyskiy</option>
+                                
+                                    <option value="extremist groups">extremist groups</option>
+                                
+                                    <option value="financial sector under-regulation">financial sector under-regulation</option>
+                                
+                                    <option value="free trade">free trade</option>
+                                
+                                    <option value="trade limitations">trade limitations</option>
+                                
+                                    <option value="turned -businessmen">turned -businessmen</option>
+                                
+                                    <option value="world's underworld">world's underworld</option>
+                                
+                                    <option value="greece">greece</option>
+                                
+                                    <option value="humanitarian response">humanitarian response</option>
+                                
+                                    <option value="modern slavery">modern slavery</option>
+                                
+                                    <option value="preventing/countering violent extremism (p/cve)">preventing/countering violent extremism (p/cve)</option>
+                                
+                                    <option value="health spas">health spas</option>
+                                
+                                    <option value="holiday resorts'">holiday resorts'</option>
+                                
+                                    <option value="how to end the war in ukraine">how to end the war in ukraine</option>
+                                
+                                    <option value="war in ukraine">war in ukraine</option>
+                                
+                                    <option value="human rights practices">human rights practices</option>
+                                
+                                    <option value="humanitarian assistance">humanitarian assistance</option>
+                                
+                                    <option value="neglect">neglect</option>
+                                
+                                    <option value="jensen">jensen</option>
+                                
+                                    <option value="minsk peace process">minsk peace process</option>
+                                
+                                    <option value="illegal weapons">illegal weapons</option>
+                                
+                                    <option value="infrastructure">infrastructure</option>
+                                
+                                    <option value="legislative changes">legislative changes</option>
+                                
+                                    <option value="institutions">institutions</option>
+                                
+                                    <option value="loyal agents">loyal agents</option>
+                                
+                                    <option value="insurgents">insurgents</option>
+                                
+                                    <option value="police">police</option>
+                                
+                                    <option value="little interest in promoting good governance and economic prosperity in the region">little interest in promoting good governance and economic prosperity in the region</option>
+                                
+                                    <option value="large population">large population</option>
+                                
+                                    <option value="thousands displaced">thousands displaced</option>
+                                
+                                    <option value="law-abiding citizens">law-abiding citizens</option>
+                                
+                                    <option value="legislation">legislation</option>
+                                
+                                    <option value="effective implementation">effective implementation</option>
+                                
+                                    <option value="list of areas allowed to run gambling ventures">list of areas allowed to run gambling ventures</option>
+                                
+                                    <option value="organised gambling">organised gambling</option>
+                                
+                                    <option value="local government and politics">local government and politics</option>
+                                
+                                    <option value="local militias">local militias</option>
+                                
+                                    <option value="luhansk people’s republic (lpr)">luhansk people’s republic (lpr)</option>
+                                
+                                    <option value="ukrainian forces">ukrainian forces</option>
+                                
+                                    <option value="significant subsidies and other support">significant subsidies and other support</option>
+                                
+                                    <option value="private hands">private hands</option>
+                                
+                                    <option value="russia's federal security force (fsb)">russia's federal security force (fsb)</option>
+                                
+                                    <option value="slavic gangs'">slavic gangs'</option>
+                                
+                                    <option value="tatar groups">tatar groups</option>
+                                
+                                    <option value="tatar organisations">tatar organisations</option>
+                                
+                                    <option value="worth usd 110 million">worth usd 110 million</option>
+                                
+                                    <option value="reducing charges on illicit goods">reducing charges on illicit goods</option>
+                                
+                                    <option value="offshore tax havens">offshore tax havens</option>
+                                
+                                    <option value="transactions">transactions</option>
+                                
+                                    <option value="oleksandr onyshchenko">oleksandr onyshchenko</option>
+                                
+                                    <option value="poroshenko government">poroshenko government</option>
+                                
+                                    <option value="russian forces">russian forces</option>
+                                
+                                    <option value="self-sufficient economy">self-sufficient economy</option>
+                                
+                                    <option value="stable peace">stable peace</option>
+                                
+                                    <option value="subsidies">subsidies</option>
+                                
+                                    <option value="vladimir konstantinov">vladimir konstantinov</option>
+                                
+                                    <option value="peace process">peace process</option>
+                                
+                                    <option value="pervasive corruption">pervasive corruption</option>
+                                
+                                    <option value="corrupt practices">corrupt practices</option>
+                                
+                                    <option value="ukraine's moves towards eu">ukraine's moves towards eu</option>
+                                
+                                    <option value="research">research</option>
+                                
+                                    <option value="rest of country">rest of country</option>
+                                
+                                    <option value="southern russia">southern russia</option>
+                                
+                                    <option value="ukraine border">ukraine border</option>
+                                
+                                    <option value="using fake documents and corrupt officials to steal property">using fake documents and corrupt officials to steal property</option>
+                                
+                                    <option value="rostov oblast">rostov oblast</option>
+                                
+                                    <option value="ethnic russians in ukraine">ethnic russians in ukraine</option>
+                                
+                                    <option value="separatist-held areas">separatist-held areas</option>
+                                
+                                    <option value="russia border">russia border</option>
+                                
+                                    <option value="russian army">russian army</option>
+                                
+                                    <option value="separatists">separatists</option>
+                                
+                                    <option value="russian intervention in ukraine">russian intervention in ukraine</option>
+                                
+                                    <option value="putin's approval ratings">putin's approval ratings</option>
+                                
+                                    <option value="socace_research">socace_research</option>
+                                
+                                    <option value="supply and market links">supply and market links</option>
+                                
+                                    <option value="shattered">shattered</option>
+                                
+                                    <option value="war in ukraine's donbas">war in ukraine's donbas</option>
+                                
+                                    <option value="economically troubled region">economically troubled region</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"group": 1, "id": "30,000 people", "label": "30,000 people", "shape": "dot", "size": 3}, {"group": 1, "id": "donbas", "label": "donbas", "shape": "dot", "size": 60}, {"group": 1, "id": "ocgs", "label": "ocgs", "shape": "dot", "size": 19}, {"group": 1, "id": "ukraine", "label": "ukraine", "shape": "dot", "size": 55}, {"group": 2, "id": "427 km front line", "label": "427 km front line", "shape": "dot", "size": 1}, {"group": 2, "id": "most densely populated and industrially productive part of the country", "label": "most densely populated and industrially productive part of the country", "shape": "dot", "size": 1}, {"group": 1, "id": "ace", "label": "ace", "shape": "dot", "size": 11}, {"group": 1, "id": "anti-corruption", "label": "anti-corruption", "shape": "dot", "size": 3}, {"group": 1, "id": "anti-corruption evidence", "label": "anti-corruption evidence", "shape": "dot", "size": 3}, {"group": 1, "id": "fcdo", "label": "fcdo", "shape": "dot", "size": 3}, {"group": 1, "id": "global integrity", "label": "global integrity", "shape": "dot", "size": 3}, {"group": 1, "id": "government", "label": "government", "shape": "dot", "size": 3}, {"group": 1, "id": "research programme", "label": "research programme", "shape": "dot", "size": 3}, {"group": 1, "id": "serious organized crime", "label": "serious organized crime", "shape": "dot", "size": 3}, {"group": 1, "id": "soas", "label": "soas", "shape": "dot", "size": 3}, {"group": 1, "id": "soc ace", "label": "soc ace", "shape": "dot", "size": 29}, {"group": 1, "id": "stakeholders", "label": "stakeholders", "shape": "dot", "size": 3}, {"group": 1, "id": "university of birmingham", "label": "university of birmingham", "shape": "dot", "size": 20}, {"group": 1, "id": "addiction", "label": "addiction", "shape": "dot", "size": 9}, {"group": 1, "id": "casinos", "label": "casinos", "shape": "dot", "size": 9}, {"group": 1, "id": "loan sharking", "label": "loan sharking", "shape": "dot", "size": 2}, {"group": 1, "id": "money laundering", "label": "money laundering", "shape": "dot", "size": 9}, {"group": 1, "id": "organized crime", "label": "organized crime", "shape": "dot", "size": 6}, {"group": 1, "id": "overseas markets", "label": "overseas markets", "shape": "dot", "size": 2}, {"group": 1, "id": "protection racketeering", "label": "protection racketeering", "shape": "dot", "size": 3}, {"group": 1, "id": "regional budget", "label": "regional budget", "shape": "dot", "size": 2}, {"group": 1, "id": "unlikely", "label": "unlikely", "shape": "dot", "size": 2}, {"group": 1, "id": "vice of every kind", "label": "vice of every kind", "shape": "dot", "size": 2}, {"group": 1, "id": "administration", "label": "administration", "shape": "dot", "size": 2}, {"group": 1, "id": "kiev", "label": "kiev", "shape": "dot", "size": 5}, {"group": 1, "id": "advance militarily", "label": "advance militarily", "shape": "dot", "size": 2}, {"group": 1, "id": "mila kovsky", "label": "mila kovsky", "shape": "dot", "size": 2}, {"group": 1, "id": "aggression", "label": "aggression", "shape": "dot", "size": 3}, {"group": 1, "id": "conflict", "label": "conflict", "shape": "dot", "size": 19}, {"group": 1, "id": "russia", "label": "russia", "shape": "dot", "size": 46}, {"group": 1, "id": "amro", "label": "amro", "shape": "dot", "size": 6}, {"group": 1, "id": "cadlr", "label": "cadlr", "shape": "dot", "size": 16}, {"group": 1, "id": "eu", "label": "eu", "shape": "dot", "size": 6}, {"group": 1, "id": "nabu", "label": "nabu", "shape": "dot", "size": 16}, {"group": 1, "id": "soc", "label": "soc", "shape": "dot", "size": 16}, {"group": 1, "id": "annexation of crimea", "label": "annexation of crimea", "shape": "dot", "size": 4}, {"group": 1, "id": "conflict in eastern ukraine", "label": "conflict in eastern ukraine", "shape": "dot", "size": 13}, {"group": 1, "id": "corruption", "label": "corruption", "shape": "dot", "size": 80}, {"group": 1, "id": "crime", "label": "crime", "shape": "dot", "size": 16}, {"group": 3, "id": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "label": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "shape": "dot", "size": 5}, {"group": 3, "id": "e -declaration system", "label": "e -declaration system", "shape": "dot", "size": 1}, {"group": 3, "id": "electronic system for state procurement tenders", "label": "electronic system for state procurement tenders", "shape": "dot", "size": 1}, {"group": 3, "id": "former president viktor yanukovych", "label": "former president viktor yanukovych", "shape": "dot", "size": 1}, {"group": 3, "id": "gas sales from russia", "label": "gas sales from russia", "shape": "dot", "size": 1}, {"group": 3, "id": "state -owned enterprises (soes)", "label": "state -owned enterprises (soes)", "shape": "dot", "size": 1}, {"group": 1, "id": "arms trafficking", "label": "arms trafficking", "shape": "dot", "size": 7}, {"group": 1, "id": "bureau of international narcotics and law enforcement affairs", "label": "bureau of international narcotics and law enforcement affairs", "shape": "dot", "size": 7}, {"group": 1, "id": "home office", "label": "home office", "shape": "dot", "size": 4}, {"group": 1, "id": "international narcotics control strategy report", "label": "international narcotics control strategy report", "shape": "dot", "size": 7}, {"group": 1, "id": "international narcotics control strategy report (ussd binle a2)", "label": "international narcotics control strategy report (ussd binle a2)", "shape": "dot", "size": 4}, {"group": 1, "id": "transparency international", "label": "transparency international", "shape": "dot", "size": 5}, {"group": 4, "id": "bashmaki", "label": "bashmaki", "shape": "dot", "size": 1}, {"group": 4, "id": "salem", "label": "salem", "shape": "dot", "size": 1}, {"group": 1, "id": "black sea smuggling routes", "label": "black sea smuggling routes", "shape": "dot", "size": 2}, {"group": 1, "id": "smuggling", "label": "smuggling", "shape": "dot", "size": 20}, {"group": 1, "id": "business elites", "label": "business elites", "shape": "dot", "size": 2}, {"group": 1, "id": "political patronage", "label": "political patronage", "shape": "dot", "size": 12}, {"group": 1, "id": "dpr", "label": "dpr", "shape": "dot", "size": 5}, {"group": 1, "id": "lpr", "label": "lpr", "shape": "dot", "size": 5}, {"group": 1, "id": "napc", "label": "napc", "shape": "dot", "size": 5}, {"group": 1, "id": "ngca", "label": "ngca", "shape": "dot", "size": 5}, {"group": 1, "id": "ocg", "label": "ocg", "shape": "dot", "size": 5}, {"group": 1, "id": "sapo", "label": "sapo", "shape": "dot", "size": 5}, {"group": 1, "id": "sbi", "label": "sbi", "shape": "dot", "size": 5}, {"group": 1, "id": "ubo", "label": "ubo", "shape": "dot", "size": 5}, {"group": 1, "id": "close ties to organised crime", "label": "close ties to organised crime", "shape": "dot", "size": 2}, {"group": 1, "id": "crimea", "label": "crimea", "shape": "dot", "size": 33}, {"group": 1, "id": "oligarchs", "label": "oligarchs", "shape": "dot", "size": 10}, {"group": 1, "id": "closer ties were even forged between russian ocgs and tho se in ukraine", "label": "closer ties were even forged between russian ocgs and tho se in ukraine", "shape": "dot", "size": 2}, {"group": 1, "id": "coal", "label": "coal", "shape": "dot", "size": 2}, {"group": 1, "id": "trade", "label": "trade", "shape": "dot", "size": 7}, {"group": 1, "id": "coal industry", "label": "coal industry", "shape": "dot", "size": 3}, {"group": 1, "id": "cocaine", "label": "cocaine", "shape": "dot", "size": 2}, {"group": 1, "id": "ukrainian seaports and airports", "label": "ukrainian seaports and airports", "shape": "dot", "size": 2}, {"group": 1, "id": "donbas conflict", "label": "donbas conflict", "shape": "dot", "size": 4}, {"group": 1, "id": "eastern ukraine", "label": "eastern ukraine", "shape": "dot", "size": 26}, {"group": 1, "id": "evidence review", "label": "evidence review", "shape": "dot", "size": 5}, {"group": 1, "id": "global crime scene", "label": "global crime scene", "shape": "dot", "size": 4}, {"group": 1, "id": "iffat idris", "label": "iffat idris", "shape": "dot", "size": 14}, {"group": 1, "id": "organized criminal groups", "label": "organized criminal groups", "shape": "dot", "size": 5}, {"group": 1, "id": "resilience", "label": "resilience", "shape": "dot", "size": 3}, {"group": 1, "id": "separatist forces", "label": "separatist forces", "shape": "dot", "size": 7}, {"group": 1, "id": "transnational crime", "label": "transnational crime", "shape": "dot", "size": 14}, {"group": 1, "id": "donbas region", "label": "donbas region", "shape": "dot", "size": 7}, {"group": 1, "id": "conflict analysis", "label": "conflict analysis", "shape": "dot", "size": 5}, {"group": 1, "id": "gsdrc", "label": "gsdrc", "shape": "dot", "size": 9}, {"group": 1, "id": "international development department", "label": "international development department", "shape": "dot", "size": 9}, {"group": 1, "id": "research fellow", "label": "research fellow", "shape": "dot", "size": 9}, {"group": 1, "id": "economic blockade", "label": "economic blockade", "shape": "dot", "size": 8}, {"group": 1, "id": "economy", "label": "economy", "shape": "dot", "size": 10}, {"group": 1, "id": "political elites/oligarchs", "label": "political elites/oligarchs", "shape": "dot", "size": 3}, {"group": 1, "id": "western sanctions", "label": "western sanctions", "shape": "dot", "size": 5}, {"group": 1, "id": "western structures", "label": "western structures", "shape": "dot", "size": 5}, {"group": 1, "id": "connection between crime and the russian state", "label": "connection between crime and the russian state", "shape": "dot", "size": 2}, {"group": 1, "id": "crimean annexation", "label": "crimean annexation", "shape": "dot", "size": 5}, {"group": 1, "id": "salem organised criminal group", "label": "salem organised criminal group", "shape": "dot", "size": 5}, {"group": 1, "id": "criminality", "label": "criminality", "shape": "dot", "size": 3}, {"group": 1, "id": "crisis in ukraine", "label": "crisis in ukraine", "shape": "dot", "size": 4}, {"group": 1, "id": "deep internal divisions", "label": "deep internal divisions", "shape": "dot", "size": 2}, {"group": 1, "id": "donbas regional business oligarchs", "label": "donbas regional business oligarchs", "shape": "dot", "size": 7}, {"group": 1, "id": "drug trafficking routes", "label": "drug trafficking routes", "shape": "dot", "size": 2}, {"group": 1, "id": "economic situation", "label": "economic situation", "shape": "dot", "size": 2}, {"group": 1, "id": "elderly residents", "label": "elderly residents", "shape": "dot", "size": 4}, {"group": 1, "id": "euromaidan protests", "label": "euromaidan protests", "shape": "dot", "size": 6}, {"group": 1, "id": "functioning of the state", "label": "functioning of the state", "shape": "dot", "size": 2}, {"group": 1, "id": "gazprom", "label": "gazprom", "shape": "dot", "size": 3}, {"group": 1, "id": "global money laundering centre", "label": "global money laundering centre", "shape": "dot", "size": 3}, {"group": 1, "id": "government salaries", "label": "government salaries", "shape": "dot", "size": 3}, {"group": 1, "id": "government-controlled territory", "label": "government-controlled territory", "shape": "dot", "size": 4}, {"group": 1, "id": "heroin", "label": "heroin", "shape": "dot", "size": 2}, {"group": 1, "id": "hostilities in donbas", "label": "hostilities in donbas", "shape": "dot", "size": 1}, {"group": 1, "id": "humanitarian aid", "label": "humanitarian aid", "shape": "dot", "size": 3}, {"group": 1, "id": "icg (2017)", "label": "icg (2017)", "shape": "dot", "size": 2}, {"group": 1, "id": "impunity", "label": "impunity", "shape": "dot", "size": 1}, {"group": 1, "id": "kickbacks, sweetheart deals, and attrition of construction materials", "label": "kickbacks, sweetheart deals, and attrition of construction materials", "shape": "dot", "size": 2}, {"group": 1, "id": "military action in eastern ukraine", "label": "military action in eastern ukraine", "shape": "dot", "size": 1}, {"group": 1, "id": "moscow", "label": "moscow", "shape": "dot", "size": 10}, {"group": 1, "id": "moscow -based crime networks", "label": "moscow -based crime networks", "shape": "dot", "size": 2}, {"group": 1, "id": "odessa", "label": "odessa", "shape": "dot", "size": 10}, {"group": 6, "id": "ongoing conflict", "label": "ongoing conflict", "shape": "dot", "size": 22}, {"group": 1, "id": "organised crime", "label": "organised crime", "shape": "dot", "size": 14}, {"group": 1, "id": "organised criminal groups", "label": "organised criminal groups", "shape": "dot", "size": 9}, {"group": 1, "id": "organized criminals", "label": "organized criminals", "shape": "dot", "size": 6}, {"group": 1, "id": "political connections", "label": "political connections", "shape": "dot", "size": 7}, {"group": 1, "id": "population", "label": "population", "shape": "dot", "size": 1}, {"group": 1, "id": "pyramidal nature of state capture", "label": "pyramidal nature of state capture", "shape": "dot", "size": 1}, {"group": 1, "id": "rule of law index", "label": "rule of law index", "shape": "dot", "size": 1}, {"group": 1, "id": "russian/crimea", "label": "russian/crimea", "shape": "dot", "size": 3}, {"group": 1, "id": "senior officials", "label": "senior officials", "shape": "dot", "size": 4}, {"group": 1, "id": "sevastopol", "label": "sevastopol", "shape": "dot", "size": 7}, {"group": 1, "id": "simferopol", "label": "simferopol", "shape": "dot", "size": 3}, {"group": 1, "id": "smuggling hub", "label": "smuggling hub", "shape": "dot", "size": 11}, {"group": 1, "id": "social programs", "label": "social programs", "shape": "dot", "size": 3}, {"group": 1, "id": "state weakening", "label": "state weakening", "shape": "dot", "size": 2}, {"group": 1, "id": "transnational organized crime syndicates", "label": "transnational organized crime syndicates", "shape": "dot", "size": 1}, {"group": 6, "id": "transparency", "label": "transparency", "shape": "dot", "size": 2}, {"group": 1, "id": "violent offences", "label": "violent offences", "shape": "dot", "size": 2}, {"group": 1, "id": "yanukovych", "label": "yanukovych", "shape": "dot", "size": 5}, {"group": 1, "id": "yanukovych\u2019s administration", "label": "yanukovych\u2019s administration", "shape": "dot", "size": 4}, {"group": 1, "id": "yanukovych\u2019s party of the regions", "label": "yanukovych\u2019s party of the regions", "shape": "dot", "size": 3}, {"group": 1, "id": "crime prevention mechanisms", "label": "crime prevention mechanisms", "shape": "dot", "size": 2}, {"group": 1, "id": "information technologies", "label": "information technologies", "shape": "dot", "size": 2}, {"group": 1, "id": "development funds", "label": "development funds", "shape": "dot", "size": 2}, {"group": 1, "id": "embezzlement and corruption for russian and crimean ocgs", "label": "embezzlement and corruption for russian and crimean ocgs", "shape": "dot", "size": 1}, {"group": 1, "id": "gangsters", "label": "gangsters", "shape": "dot", "size": 5}, {"group": 1, "id": "heavily dependent on organised crime", "label": "heavily dependent on organised crime", "shape": "dot", "size": 1}, {"group": 1, "id": "increasingly dominant within crimea", "label": "increasingly dominant within crimea", "shape": "dot", "size": 1}, {"group": 7, "id": "non -slavic gangs", "label": "non -slavic gangs", "shape": "dot", "size": 12}, {"group": 1, "id": "opportunity for embezzlement and corruption", "label": "opportunity for embezzlement and corruption", "shape": "dot", "size": 2}, {"group": 1, "id": "russian connection to criminalization", "label": "russian connection to criminalization", "shape": "dot", "size": 2}, {"group": 1, "id": "seizing property belonging to pro -", "label": "seizing property belonging to pro -", "shape": "dot", "size": 1}, {"group": 1, "id": "ukrainian amber", "label": "ukrainian amber", "shape": "dot", "size": 6}, {"group": 1, "id": "viktor medvedchuk", "label": "viktor medvedchuk", "shape": "dot", "size": 11}, {"group": 6, "id": "crimea\u0027s annexation", "label": "crimea\u0027s annexation", "shape": "dot", "size": 2}, {"group": 6, "id": "ukraine\u0027s sovereignty", "label": "ukraine\u0027s sovereignty", "shape": "dot", "size": 2}, {"group": 7, "id": "crimea\u0027s annexation on, police and russia\u2019s federal security force (fsb)", "label": "crimea\u0027s annexation on, police and russia\u2019s federal security force (fsb)", "shape": "dot", "size": 2}, {"group": 7, "id": "local organised criminal groups", "label": "local organised criminal groups", "shape": "dot", "size": 2}, {"group": 1, "id": "crimea\u0027s criminal and political elites", "label": "crimea\u0027s criminal and political elites", "shape": "dot", "size": 2}, {"group": 1, "id": "enrichment", "label": "enrichment", "shape": "dot", "size": 2}, {"group": 1, "id": "organised criminal groups in crimea and russian political elites", "label": "organised criminal groups in crimea and russian political elites", "shape": "dot", "size": 2}, {"group": 1, "id": "organised criminal networks in russia", "label": "organised criminal networks in russia", "shape": "dot", "size": 2}, {"group": 1, "id": "sergei aksyonov", "label": "sergei aksyonov", "shape": "dot", "size": 3}, {"group": 1, "id": "crimean government", "label": "crimean government", "shape": "dot", "size": 2}, {"group": 1, "id": "illegally seizing", "label": "illegally seizing", "shape": "dot", "size": 2}, {"group": 1, "id": "criminals as agents and allies", "label": "criminals as agents and allies", "shape": "dot", "size": 1}, {"group": 1, "id": "crony capitalism", "label": "crony capitalism", "shape": "dot", "size": 2}, {"group": 1, "id": "icg", "label": "icg", "shape": "dot", "size": 8}, {"group": 1, "id": "cyprus", "label": "cyprus", "shape": "dot", "size": 3}, {"group": 1, "id": "latvia", "label": "latvia", "shape": "dot", "size": 3}, {"group": 1, "id": "divide", "label": "divide", "shape": "dot", "size": 1}, {"group": 1, "id": "donetsk", "label": "donetsk", "shape": "dot", "size": 6}, {"group": 1, "id": "donetsk region", "label": "donetsk region", "shape": "dot", "size": 9}, {"group": 1, "id": "gangs", "label": "gangs", "shape": "dot", "size": 3}, {"group": 1, "id": "highest level of criminal activity", "label": "highest level of criminal activity", "shape": "dot", "size": 2}, {"group": 1, "id": "homicides across ukraine", "label": "homicides across ukraine", "shape": "dot", "size": 2}, {"group": 1, "id": "legal nihilism", "label": "legal nihilism", "shape": "dot", "size": 2}, {"group": 1, "id": "luhansk", "label": "luhansk", "shape": "dot", "size": 3}, {"group": 1, "id": "political groups", "label": "political groups", "shape": "dot", "size": 3}, {"group": 1, "id": "prisons", "label": "prisons", "shape": "dot", "size": 3}, {"group": 1, "id": "prisons and labour colonies", "label": "prisons and labour colonies", "shape": "dot", "size": 3}, {"group": 1, "id": "rule of law", "label": "rule of law", "shape": "dot", "size": 3}, {"group": 1, "id": "russia backing", "label": "russia backing", "shape": "dot", "size": 1}, {"group": 1, "id": "russia-based insurgency", "label": "russia-based insurgency", "shape": "dot", "size": 2}, {"group": 1, "id": "separatists installed by the krem lin", "label": "separatists installed by the krem lin", "shape": "dot", "size": 1}, {"group": 1, "id": "significant structural factors driving insurgency", "label": "significant structural factors driving insurgency", "shape": "dot", "size": 1}, {"group": 1, "id": "structural factors", "label": "structural factors", "shape": "dot", "size": 1}, {"group": 1, "id": "total crime", "label": "total crime", "shape": "dot", "size": 2}, {"group": 1, "id": "trench war", "label": "trench war", "shape": "dot", "size": 1}, {"group": 1, "id": "ukraine\u0027s gangsters", "label": "ukraine\u0027s gangsters", "shape": "dot", "size": 2}, {"group": 1, "id": "ukraine\u0027s political and economic leaders", "label": "ukraine\u0027s political and economic leaders", "shape": "dot", "size": 6}, {"group": 1, "id": "weak governance", "label": "weak governance", "shape": "dot", "size": 3}, {"group": 1, "id": "putin", "label": "putin", "shape": "dot", "size": 5}, {"group": 1, "id": "mines", "label": "mines", "shape": "dot", "size": 3}, {"group": 1, "id": "political elites", "label": "political elites", "shape": "dot", "size": 3}, {"group": 1, "id": "pro-russia ukrainian politicians", "label": "pro-russia ukrainian politicians", "shape": "dot", "size": 3}, {"group": 1, "id": "dr iffat idris", "label": "dr iffat idris", "shape": "dot", "size": 5}, {"group": 1, "id": "drug sales", "label": "drug sales", "shape": "dot", "size": 1}, {"group": 1, "id": "rise in organized crime in rest of ukraine", "label": "rise in organized crime in rest of ukraine", "shape": "dot", "size": 3}, {"group": 1, "id": "international sanctions", "label": "international sanctions", "shape": "dot", "size": 2}, {"group": 1, "id": "mafia state", "label": "mafia state", "shape": "dot", "size": 2}, {"group": 1, "id": "regular russian army", "label": "regular russian army", "shape": "dot", "size": 2}, {"group": 1, "id": "ukrainian government", "label": "ukrainian government", "shape": "dot", "size": 4}, {"group": 6, "id": "economic prosperity", "label": "economic prosperity", "shape": "dot", "size": 1}, {"group": 1, "id": "economic recession", "label": "economic recession", "shape": "dot", "size": 1}, {"group": 6, "id": "embezzlement", "label": "embezzlement", "shape": "dot", "size": 2}, {"group": 6, "id": "russian development funds", "label": "russian development funds", "shape": "dot", "size": 2}, {"group": 1, "id": "europe", "label": "europe", "shape": "dot", "size": 3}, {"group": 1, "id": "expropriation", "label": "expropriation", "shape": "dot", "size": 2}, {"group": 1, "id": "ihor kolomoyskiy", "label": "ihor kolomoyskiy", "shape": "dot", "size": 2}, {"group": 1, "id": "extremist groups", "label": "extremist groups", "shape": "dot", "size": 2}, {"group": 1, "id": "financial sector under-regulation", "label": "financial sector under-regulation", "shape": "dot", "size": 4}, {"group": 6, "id": "free trade", "label": "free trade", "shape": "dot", "size": 2}, {"group": 6, "id": "trade limitations", "label": "trade limitations", "shape": "dot", "size": 2}, {"group": 1, "id": "turned -businessmen", "label": "turned -businessmen", "shape": "dot", "size": 1}, {"group": 1, "id": "world\u0027s underworld", "label": "world\u0027s underworld", "shape": "dot", "size": 3}, {"group": 1, "id": "greece", "label": "greece", "shape": "dot", "size": 3}, {"group": 1, "id": "humanitarian response", "label": "humanitarian response", "shape": "dot", "size": 5}, {"group": 1, "id": "modern slavery", "label": "modern slavery", "shape": "dot", "size": 5}, {"group": 1, "id": "preventing/countering violent extremism (p/cve)", "label": "preventing/countering violent extremism (p/cve)", "shape": "dot", "size": 5}, {"group": 10, "id": "health spas", "label": "health spas", "shape": "dot", "size": 1}, {"group": 10, "id": "holiday resorts\u0027", "label": "holiday resorts\u0027", "shape": "dot", "size": 1}, {"group": 1, "id": "how to end the war in ukraine", "label": "how to end the war in ukraine", "shape": "dot", "size": 2}, {"group": 1, "id": "war in ukraine", "label": "war in ukraine", "shape": "dot", "size": 2}, {"group": 1, "id": "human rights practices", "label": "human rights practices", "shape": "dot", "size": 1}, {"group": 6, "id": "humanitarian assistance", "label": "humanitarian assistance", "shape": "dot", "size": 2}, {"group": 6, "id": "neglect", "label": "neglect", "shape": "dot", "size": 2}, {"group": 1, "id": "jensen", "label": "jensen", "shape": "dot", "size": 2}, {"group": 1, "id": "minsk peace process", "label": "minsk peace process", "shape": "dot", "size": 1}, {"group": 1, "id": "illegal weapons", "label": "illegal weapons", "shape": "dot", "size": 2}, {"group": 11, "id": "infrastructure", "label": "infrastructure", "shape": "dot", "size": 1}, {"group": 11, "id": "legislative changes", "label": "legislative changes", "shape": "dot", "size": 1}, {"group": 12, "id": "institutions", "label": "institutions", "shape": "dot", "size": 1}, {"group": 12, "id": "loyal agents", "label": "loyal agents", "shape": "dot", "size": 1}, {"group": 1, "id": "insurgents", "label": "insurgents", "shape": "dot", "size": 2}, {"group": 1, "id": "police", "label": "police", "shape": "dot", "size": 2}, {"group": 1, "id": "little interest in promoting good governance and economic prosperity in the region", "label": "little interest in promoting good governance and economic prosperity in the region", "shape": "dot", "size": 1}, {"group": 6, "id": "large population", "label": "large population", "shape": "dot", "size": 2}, {"group": 6, "id": "thousands displaced", "label": "thousands displaced", "shape": "dot", "size": 2}, {"group": 6, "id": "law-abiding citizens", "label": "law-abiding citizens", "shape": "dot", "size": 2}, {"group": 9, "id": "legislation", "label": "legislation", "shape": "dot", "size": 1}, {"group": 9, "id": "effective implementation", "label": "effective implementation", "shape": "dot", "size": 1}, {"group": 7, "id": "list of areas allowed to run gambling ventures", "label": "list of areas allowed to run gambling ventures", "shape": "dot", "size": 2}, {"group": 7, "id": "organised gambling", "label": "organised gambling", "shape": "dot", "size": 2}, {"group": 1, "id": "local government and politics", "label": "local government and politics", "shape": "dot", "size": 1}, {"group": 1, "id": "local militias", "label": "local militias", "shape": "dot", "size": 1}, {"group": 6, "id": "luhansk people\u2019s republic (lpr)", "label": "luhansk people\u2019s republic (lpr)", "shape": "dot", "size": 1}, {"group": 6, "id": "ukrainian forces", "label": "ukrainian forces", "shape": "dot", "size": 3}, {"group": 1, "id": "significant subsidies and other support", "label": "significant subsidies and other support", "shape": "dot", "size": 1}, {"group": 7, "id": "private hands", "label": "private hands", "shape": "dot", "size": 2}, {"group": 7, "id": "russia\u0027s federal security force (fsb)", "label": "russia\u0027s federal security force (fsb)", "shape": "dot", "size": 2}, {"group": 7, "id": "slavic gangs\u0027", "label": "slavic gangs\u0027", "shape": "dot", "size": 1}, {"group": 7, "id": "tatar groups", "label": "tatar groups", "shape": "dot", "size": 1}, {"group": 7, "id": "tatar organisations", "label": "tatar organisations", "shape": "dot", "size": 2}, {"group": 7, "id": "worth usd 110 million", "label": "worth usd 110 million", "shape": "dot", "size": 2}, {"group": 1, "id": "reducing charges on illicit goods", "label": "reducing charges on illicit goods", "shape": "dot", "size": 3}, {"group": 1, "id": "offshore tax havens", "label": "offshore tax havens", "shape": "dot", "size": 2}, {"group": 1, "id": "transactions", "label": "transactions", "shape": "dot", "size": 2}, {"group": 1, "id": "oleksandr onyshchenko", "label": "oleksandr onyshchenko", "shape": "dot", "size": 3}, {"group": 1, "id": "poroshenko government", "label": "poroshenko government", "shape": "dot", "size": 3}, {"group": 6, "id": "russian forces", "label": "russian forces", "shape": "dot", "size": 2}, {"group": 6, "id": "self-sufficient economy", "label": "self-sufficient economy", "shape": "dot", "size": 2}, {"group": 6, "id": "stable peace", "label": "stable peace", "shape": "dot", "size": 1}, {"group": 6, "id": "subsidies", "label": "subsidies", "shape": "dot", "size": 2}, {"group": 1, "id": "vladimir konstantinov", "label": "vladimir konstantinov", "shape": "dot", "size": 1}, {"group": 1, "id": "peace process", "label": "peace process", "shape": "dot", "size": 1}, {"group": 5, "id": "pervasive corruption", "label": "pervasive corruption", "shape": "dot", "size": 1}, {"group": 5, "id": "corrupt practices", "label": "corrupt practices", "shape": "dot", "size": 1}, {"group": 1, "id": "ukraine\u0027s moves towards eu", "label": "ukraine\u0027s moves towards eu", "shape": "dot", "size": 1}, {"group": 1, "id": "research", "label": "research", "shape": "dot", "size": 1}, {"group": 14, "id": "rest of country", "label": "rest of country", "shape": "dot", "size": 2}, {"group": 14, "id": "southern russia", "label": "southern russia", "shape": "dot", "size": 3}, {"group": 14, "id": "ukraine border", "label": "ukraine border", "shape": "dot", "size": 3}, {"group": 1, "id": "using fake documents and corrupt officials to steal property", "label": "using fake documents and corrupt officials to steal property", "shape": "dot", "size": 1}, {"group": 1, "id": "rostov oblast", "label": "rostov oblast", "shape": "dot", "size": 2}, {"group": 1, "id": "ethnic russians in ukraine", "label": "ethnic russians in ukraine", "shape": "dot", "size": 1}, {"group": 1, "id": "separatist-held areas", "label": "separatist-held areas", "shape": "dot", "size": 2}, {"group": 14, "id": "russia border", "label": "russia border", "shape": "dot", "size": 2}, {"group": 15, "id": "russian army", "label": "russian army", "shape": "dot", "size": 1}, {"group": 15, "id": "separatists", "label": "separatists", "shape": "dot", "size": 1}, {"group": 13, "id": "russian intervention in ukraine", "label": "russian intervention in ukraine", "shape": "dot", "size": 1}, {"group": 13, "id": "putin\u0027s approval ratings", "label": "putin\u0027s approval ratings", "shape": "dot", "size": 1}, {"group": 1, "id": "socace_research", "label": "socace_research", "shape": "dot", "size": 1}, {"group": 16, "id": "supply and market links", "label": "supply and market links", "shape": "dot", "size": 1}, {"group": 16, "id": "shattered", "label": "shattered", "shape": "dot", "size": 1}, {"group": 8, "id": "war in ukraine\u0027s donbas", "label": "war in ukraine\u0027s donbas", "shape": "dot", "size": 1}, {"group": 8, "id": "economically troubled region", "label": "economically troubled region", "shape": "dot", "size": 1}]);
+                  edges = new vis.DataSet([{"from": "30,000 people", "title": "contextual proximity", "to": "donbas", "width": 0.75}, {"from": "30,000 people", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "30,000 people", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "427 km front line", "title": "The 427 km front line cuts through what used to be the most densely populated and industrially productive part of the country.", "to": "most densely populated and industrially productive part of the country", "width": 1.0}, {"from": "ace", "title": "contextual proximity", "to": "anti-corruption", "width": 0.75}, {"from": "ace", "title": "The text mentions that SOC ACE is a component in the Anti-Corruption Evidence research programme, as evident from the sentence \u0027SOC ACE is a new component in the Anti -Corruption Evidence (ACE) research progr amme\u0027.,contextual proximity", "to": "anti-corruption evidence", "width": 1.75}, {"from": "ace", "title": "contextual proximity", "to": "fcdo", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "global integrity", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "government", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "research programme", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "serious organized crime", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "soas", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "soc ace", "width": 4.5}, {"from": "ace", "title": "contextual proximity", "to": "stakeholders", "width": 0.75}, {"from": "ace", "title": "contextual proximity", "to": "university of birmingham", "width": 1.5}, {"from": "addiction", "title": "contextual proximity", "to": "casinos", "width": 4.0}, {"from": "addiction", "title": "contextual proximity", "to": "loan sharking", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "money laundering", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "organized crime", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "overseas markets", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "protection racketeering", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "regional budget", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "unlikely", "width": 1.0}, {"from": "addiction", "title": "contextual proximity", "to": "vice of every kind", "width": 1.0}, {"from": "administration", "title": "contextual proximity", "to": "donbas", "width": 0.5}, {"from": "administration", "title": "The majority of the Donbas region is currently still being administered by Kiev, the capital city of Ukraine. However, this administration does not extend to the areas that are controlled by separatists installed by the Kremlin.", "to": "kiev", "width": 1.0}, {"from": "advance militarily", "title": "contextual proximity", "to": "donbas", "width": 0.5}, {"from": "advance militarily", "title": "According to Mila Kovaly, it is extremely unlikely that either side will be able to successfully advance militarily in the ongoing conflict in the Donbas region.", "to": "mila kovsky", "width": 1.0}, {"from": "aggression", "title": "contextual proximity", "to": "conflict", "width": 0.5}, {"from": "aggression", "title": "Boulegue and Lutsevych (2020) also examine the issue of Russian aggression towards Ukraine in their article \u0027Resilient Ukraine: Safeguarding society from Russian aggression\u0027.,contextual proximity", "to": "russia", "width": 1.5}, {"from": "aggression", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "amro", "title": "contextual proximity", "to": "cadlr", "width": 1.0}, {"from": "amro", "title": "contextual proximity", "to": "donbas", "width": 0.5}, {"from": "amro", "title": "The Asset Management and Recovery Office (AMRO) is a European Union (EU) institution that supports the economic governance of Ukraine by providing financial assistance, technical advice, and monitoring to address macroeconomic imbalances.", "to": "eu", "width": 1.0}, {"from": "amro", "title": "contextual proximity", "to": "nabu", "width": 0.5}, {"from": "amro", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "amro", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "annexation of crimea", "title": "contextual proximity", "to": "conflict in eastern ukraine", "width": 0.75}, {"from": "annexation of crimea", "title": "contextual proximity", "to": "corruption", "width": 0.5}, {"from": "annexation of crimea", "title": "contextual proximity", "to": "crime", "width": 0.5}, {"from": "annexation of crimea", "title": "The 2014 annexation of Crimea by Russia, and the ongoing conflict in eastern Ukraine , was also strongly linked to both.", "to": "russia", "width": 1.0}, {"from": "anti-corruption", "title": "SOC ACE is a component of the Anti-Corruption Evidence research programme aimed at tackling transnational corruption, as mentioned in the given context.,contextual proximity", "to": "soc ace", "width": 2.5}, {"from": "anti-corruption", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "title": "An e -declaration system through which senior officials must declare their assets has also been introduced as part of the anti-corruption efforts.,contextual proximity", "to": "e -declaration system", "width": 2.25}, {"from": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "title": "Improved public sector transparency through the introduction of an electronic system for state procurement tenders has also contributed to the fight against corruption.,contextual proximity", "to": "electronic system for state procurement tenders", "width": 2.25}, {"from": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "title": "Despite overwhelming evidence that many oversaw the theft of public assets on an epic scale, these bodies were established by the post-Yanukovych government to combat corruption. However, they have come under strong political pressure from elites and oligarchs opposed to reform.,contextual proximity", "to": "former president viktor yanukovych", "width": 2.25}, {"from": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "title": "The elimination of gas sales from Russia, previously the largest source of corruption in the economy, has shrunk the space in which corrupt practices can occur.,contextual proximity", "to": "gas sales from russia", "width": 2.25}, {"from": "anti-corruption bodies (napc, nabu, sapo, sbi, amro)", "title": "State-owned enterprises continue to bleed the state budget through corrupt schemes, according to a report by Ash et al. The anti-corruption bodies are working to address this issue.,contextual proximity", "to": "state -owned enterprises (soes)", "width": 2.25}, {"from": "anti-corruption evidence", "title": "contextual proximity", "to": "soc ace", "width": 1.5}, {"from": "anti-corruption evidence", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "arms trafficking", "title": "The Bureau of International Narcotics and Law Enforcement Affairs plays a significant role in addressing arms trafficking.,contextual proximity", "to": "bureau of international narcotics and law enforcement affairs", "width": 3.25}, {"from": "arms trafficking", "title": "contextual proximity", "to": "corruption", "width": 0.75}, {"from": "arms trafficking", "title": "contextual proximity", "to": "home office", "width": 0.75}, {"from": "arms trafficking", "title": "contextual proximity", "to": "international narcotics control strategy report", "width": 3.0}, {"from": "arms trafficking", "title": "contextual proximity", "to": "international narcotics control strategy report (ussd binle a2)", "width": 0.75}, {"from": "arms trafficking", "title": "contextual proximity", "to": "money laundering", "width": 1.5}, {"from": "arms trafficking", "title": "contextual proximity", "to": "transparency international", "width": 0.75}, {"from": "bashmaki", "title": "The Bashmaki and Salem are two rival gangs operating in Simferopol. They both act as entrepreneurs and predators, forcing local businesses to pay tribute and sell their goods (Galeotti, 2014b).", "to": "salem", "width": 1.0}, {"from": "black sea smuggling routes", "title": "contextual proximity", "to": "corruption", "width": 0.5}, {"from": "black sea smuggling routes", "title": "These routes were used by Russian OCGs after the annexation of Crimea.,contextual proximity", "to": "smuggling", "width": 1.75}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "corruption", "width": 0.75}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "home office", "width": 0.75}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "international narcotics control strategy report", "width": 3.0}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "international narcotics control strategy report (ussd binle a2)", "width": 0.75}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "money laundering", "width": 1.5}, {"from": "bureau of international narcotics and law enforcement affairs", "title": "contextual proximity", "to": "transparency international", "width": 0.75}, {"from": "business elites", "title": "ties with political elites are equally strong due to corruption.,contextual proximity", "to": "corruption", "width": 1.75}, {"from": "business elites", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "cadlr", "title": "contextual proximity", "to": "corruption", "width": 1.0}, {"from": "cadlr", "title": "The Donetz Basin (Donbas) is a region in eastern Ukraine that falls within the Certain Areas of Donetsk and Luhansk Regions (CADLR).,contextual proximity", "to": "donbas", "width": 3.0}, {"from": "cadlr", "title": "contextual proximity", "to": "dpr", "width": 1.0}, {"from": "cadlr", "title": "contextual proximity", "to": "eu", "width": 1.0}, {"from": "cadlr", "title": "The Luhansk People\u2019s Republic (LPR) is a separatist entity that operates in the Certain Areas of Donetsk and Luhansk Regions (CADLR).,contextual proximity", "to": "lpr", "width": 2.0}, {"from": "cadlr", "title": "contextual proximity", "to": "nabu", "width": 2.0}, {"from": "cadlr", "title": "contextual proximity", "to": "napc", "width": 1.0}, {"from": "cadlr", "title": "The Non -government Controlled Areas (NGCA) refer to the areas in eastern Ukraine that are not under government control, which fall within the Certain Areas of Donetsk and Luhansk Regions (CADLR).,contextual proximity", "to": "ngca", "width": 2.0}, {"from": "cadlr", "title": "contextual proximity", "to": "ocg", "width": 1.0}, {"from": "cadlr", "title": "contextual proximity", "to": "sapo", "width": 1.0}, {"from": "cadlr", "title": "contextual proximity", "to": "sbi", "width": 1.0}, {"from": "cadlr", "title": "contextual proximity", "to": "soc", "width": 3.0}, {"from": "cadlr", "title": "contextual proximity", "to": "soc ace", "width": 5.0}, {"from": "cadlr", "title": "contextual proximity", "to": "ubo", "width": 1.0}, {"from": "cadlr", "title": "contextual proximity", "to": "ukraine", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "loan sharking", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "money laundering", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "organized crime", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "overseas markets", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "protection racketeering", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "regional budget", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "unlikely", "width": 1.0}, {"from": "casinos", "title": "contextual proximity", "to": "vice of every kind", "width": 1.0}, {"from": "close ties to organised crime", "title": "contextual proximity", "to": "crimea", "width": 0.75}, {"from": "close ties to organised crime", "title": "In the context provided, \u0027oligarchs\u0027 are related to \u0027close ties to organised crime\u0027 as they have benefited hugely from Crimea becoming part of Russia with close ties to organized crime.", "to": "oligarchs", "width": 1.0}, {"from": "closer ties were even forged between russian ocgs and tho se in ukraine", "title": "contextual proximity", "to": "crimea", "width": 0.75}, {"from": "closer ties were even forged between russian ocgs and tho se in ukraine", "title": "In the context provided, \u0027Russia\u0027 is related to \u0027closer ties were even forged between Russian OCGs and tho se in Ukraine\u0027 as there have been closer ties formed between Russian organized crime groups (OCGs) and those in Ukraine.", "to": "russia", "width": 1.0}, {"from": "coal", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "coal", "title": "contextual proximity", "to": "trade", "width": 0.5}, {"from": "coal industry", "title": "as the coal industry in the Donbas declined,contextual proximity", "to": "donbas", "width": 1.75}, {"from": "coal industry", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "coal industry", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "cocaine", "title": "contextual proximity", "to": "corruption", "width": 0.5}, {"from": "cocaine", "title": "Latin American cocaine is moved through Ukrainian seaports and airports for both domestic use and further transit to EU countries.", "to": "ukrainian seaports and airports", "width": 1.0}, {"from": "conflict", "title": "contextual proximity", "to": "corruption", "width": 7.5}, {"from": "conflict", "title": "Criminal activities can lead to conflicts between groups competing for resources or control over territory. This is particularly evident in eastern Ukraine, where criminal gangs have been involved in the conflict.,contextual proximity", "to": "crime", "width": 3.0}, {"from": "conflict", "title": "contextual proximity", "to": "crimea", "width": 3.0}, {"from": "conflict", "title": "The Donbas region has been at the heart of the conflict in eastern Ukraine. Armed groups and militias have taken control of territory, which has created a challenging security environment.,contextual proximity", "to": "donbas", "width": 3.5}, {"from": "conflict", "title": "contextual proximity", "to": "donbas conflict", "width": 0.5}, {"from": "conflict", "title": "Eastern Ukraine has been affected by a prolonged conflict since 2014, with ongoing violence and displacement of people. The paper explores the root causes of this conflict.,contextual proximity", "to": "eastern ukraine", "width": 5.0}, {"from": "conflict", "title": "contextual proximity", "to": "evidence review", "width": 1.0}, {"from": "conflict", "title": "contextual proximity", "to": "global crime scene", "width": 0.5}, {"from": "conflict", "title": "contextual proximity", "to": "iffat idris", "width": 0.5}, {"from": "conflict", "title": "contextual proximity", "to": "oligarchs", "width": 1.25}, {"from": "conflict", "title": "contextual proximity", "to": "organized criminal groups", "width": 1.25}, {"from": "conflict", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "conflict", "title": "contextual proximity", "to": "resilience", "width": 0.5}, {"from": "conflict", "title": "Darden (2014) argues that Russia is not the real problem in Ukraine\u0027s case, but the article by Fischer (2019) suggests that there are differing interests and narratives between Russia and other parties involved in the conflict.,contextual proximity", "to": "russia", "width": 5.25}, {"from": "conflict", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "conflict", "title": "contextual proximity", "to": "transnational crime", "width": 1.25}, {"from": "conflict", "title": "The ICG (2021) \u0027Conflict in Ukraine\u2019s Donbas: A Visual Explainer\u0027 provides an overview of the ongoing conflict in eastern Ukraine, including its origins, key players, and major issues.,In the Council on Foreign Relations backgrounder, \u0027Ukraine - Conflicts at the Crossroads of Europe and Russia\u0027, Masters discusses the ongoing conflicts in eastern Ukraine.,contextual proximity", "to": "ukraine", "width": 7.5}, {"from": "conflict", "title": "has been ongoing since the intervention in Ukraine led by Russia, resulting in over 14,000 people killed as of now", "to": "donbas region", "width": 1.0}, {"from": "conflict analysis", "title": "contextual proximity", "to": "gsdrc", "width": 1.5}, {"from": "conflict analysis", "title": "Dr Iffat Idris\u0027s areas of focus include conflict analysis.,contextual proximity", "to": "iffat idris", "width": 2.25}, {"from": "conflict analysis", "title": "contextual proximity", "to": "international development department", "width": 0.5}, {"from": "conflict analysis", "title": "contextual proximity", "to": "research fellow", "width": 0.5}, {"from": "conflict analysis", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "conflict in eastern ukraine", "title": "The highly intermeshed nature of corruption, crime and conflict in eastern Ukraine means that the ongoing conflict has exacerbated both organised crime and corruption in Crimea and Donbas, as well as leading to a rise in transnational crime. Factors like poor governance , related to corruption and criminality , led to the Donbas conflict .,contextual proximity", "to": "corruption", "width": 6.5}, {"from": "conflict in eastern ukraine", "title": "The highly intermeshed nature of corruption, crime and conflict in eastern Ukraine me ans that not only is finding solutions difficult, but the situation with regard to each is getting worse.,contextual proximity", "to": "crime", "width": 4.5}, {"from": "conflict in eastern ukraine", "title": "crimea is a region affected by the conflict in eastern ukraine, as russian annexation of the peninsula in 2014 was followed by ongoing conflict,contextual proximity", "to": "crimea", "width": 5.75}, {"from": "conflict in eastern ukraine", "title": "donbas is a region affected by the conflict in eastern ukraine,contextual proximity", "to": "donbas", "width": 5.0}, {"from": "conflict in eastern ukraine", "title": "contextual proximity", "to": "economic blockade", "width": 2.0}, {"from": "conflict in eastern ukraine", "title": "contextual proximity", "to": "economy", "width": 4.0}, {"from": "conflict in eastern ukraine", "title": "contextual proximity", "to": "ocgs", "width": 0.75}, {"from": "conflict in eastern ukraine", "title": "contextual proximity", "to": "political elites/oligarchs", "width": 0.75}, {"from": "conflict in eastern ukraine", "title": "russia\u0027s support for insurgency in the donetz basin (donbas) suggests that moscow\u0027s real goal is to put pressure on the ukrainian government and prevent its integration into western structures,contextual proximity", "to": "russia", "width": 3.75}, {"from": "conflict in eastern ukraine", "title": "conflict in eastern ukraine has been ongoing since 2014, following the february 2014 ouster of pro-russia president yanukovych and russian annexation of crimea,contextual proximity", "to": "ukraine", "width": 3.0}, {"from": "conflict in eastern ukraine", "title": "contextual proximity", "to": "western sanctions", "width": 2.0}, {"from": "conflict in eastern ukraine", "title": "the ongoing insurgency in the donetz basin (donbas) stems from structural factors such as industrial decline, and russian support for the donbas insurgents suggests that moscow\u0027s real goal is to put pressure on the ukrainian government and prevent its integration into western structures,contextual proximity", "to": "western structures", "width": 3.0}, {"from": "connection between crime and the russian state", "title": "Galeotti (2014b) comments: what the Crimean annexation has demonstrated in especially stark form is the connection between crime and the Russian state that is not essentially parasitic and competitive (as it is when criminals embezzle e the federal budget) but instead complementary and symbiotic. Indeed, Crimea is a case study both of the way that the Kremlin uses criminals as instruments of state policy and also how the underworld and upperworld have become inextricably entwined as a consequence.,contextual proximity", "to": "crimean annexation", "width": 1.5}, {"from": "connection between crime and the russian state", "title": "contextual proximity", "to": "salem organised criminal group", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "crime", "width": 4.5}, {"from": "corruption", "title": "Corruption is a significant issue in Crimea, where Russian-backed officials have been accused of engaging in corrupt practices. This has contributed to tensions between Russia and Ukraine.,contextual proximity", "to": "crimea", "width": 5.5}, {"from": "corruption", "title": "contextual proximity", "to": "criminality", "width": 0.75}, {"from": "corruption", "title": "The crisis in Ukraine began with protests against President Yanukovych\u0027s decision to reject a deal for greater economic integration with the European Union, which drew even more protestors onto the streets and led to Yanukovych fleeing the country in February 2014 (Pifer, 2020).,contextual proximity", "to": "crisis in ukraine", "width": 2.5}, {"from": "corruption", "title": "contextual proximity", "to": "deep internal divisions", "width": 0.75}, {"from": "corruption", "title": "The Donbas region of eastern Ukraine is notorious for its high levels of corruption. It is home to a number of powerful criminal organizations, which have infiltrated local politics and law enforcement.,contextual proximity", "to": "donbas", "width": 5.5}, {"from": "corruption", "title": "contextual proximity", "to": "donbas regional business oligarchs", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "drug trafficking routes", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "eastern ukraine", "width": 8.0}, {"from": "corruption", "title": "contextual proximity", "to": "economic blockade", "width": 0.5}, {"from": "corruption", "title": "The reality of the economic situation in eastern Ukraine falls short of what many in Crimea expected or hoped for with Russia\u2019s annexation, as mentioned in the text material at line 10.", "to": "economic situation", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "economy", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "elderly residents", "width": 0.75}, {"from": "corruption", "title": "Ukrainians took to the streets to denounce the country\u2019s endemic corruption, from the grand corruption practiced by ex -president Yanukovych and his peers, to everyday corruption and petty unfairness,contextual proximity", "to": "euromaidan protests", "width": 2.5}, {"from": "corruption", "title": "contextual proximity", "to": "evidence review", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "functioning of the state", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "gazprom", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "global money laundering centre", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "government salaries", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "government-controlled territory", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "heroin", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "hostilities in donbas", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "humanitarian aid", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "icg (2017)", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "iffat idris", "width": 0.5}, {"from": "corruption", "title": "corruption remained pervasive at all levels in the executive, legislative, and judicial branches of government", "to": "impunity", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "international narcotics control strategy report", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "kickbacks, sweetheart deals, and attrition of construction materials", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "military action in eastern ukraine", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "money laundering", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "moscow", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "moscow -based crime networks", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "nabu", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "ocgs", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "odessa", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "oligarchs", "width": 1.5}, {"from": "corruption", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "organised crime", "width": 1.5}, {"from": "corruption", "title": "contextual proximity", "to": "organised criminal groups", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "organized criminal groups", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "organized criminals", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "political connections", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "political elites/oligarchs", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "political patronage", "width": 1.5}, {"from": "corruption", "title": "contextual proximity", "to": "population", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "pyramidal nature of state capture", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "rule of law index", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "russia", "width": 6.75}, {"from": "corruption", "title": "contextual proximity", "to": "russian/crimea", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "senior officials", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "sevastopol", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "simferopol", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "smuggling", "width": 2.75}, {"from": "corruption", "title": "contextual proximity", "to": "smuggling hub", "width": 1.25}, {"from": "corruption", "title": "Serious Organised Crime (SOC) often involves corruption, which is the misuse of public power for private benefit.,contextual proximity", "to": "soc", "width": 1.75}, {"from": "corruption", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "corruption", "title": "contextual proximity", "to": "social programs", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "state weakening", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "transnational organized crime syndicates", "width": 0.5}, {"from": "corruption", "title": "adverse relationship", "to": "transparency", "width": 1.0}, {"from": "corruption", "title": "contextual proximity", "to": "ukraine", "width": 5.25}, {"from": "corruption", "title": "contextual proximity", "to": "ukrainian seaports and airports", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "violent offences", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "western sanctions", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "western structures", "width": 0.5}, {"from": "corruption", "title": "contextual proximity", "to": "yanukovych", "width": 1.5}, {"from": "corruption", "title": "contextual proximity", "to": "yanukovych\u2019s administration", "width": 0.75}, {"from": "corruption", "title": "contextual proximity", "to": "yanukovych\u2019s party of the regions", "width": 0.75}, {"from": "corruption", "title": "According to Transparency International\u0027s Corruption Perception Index 2020 (https://www.transparency.org/en/cpi/2020/index/ukr), corruption remains a significant challenge in Ukraine.", "to": "transparency international", "width": 1.0}, {"from": "crime", "title": "contextual proximity", "to": "crimea", "width": 1.0}, {"from": "crime", "title": "contextual proximity", "to": "donbas", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "eastern ukraine", "width": 3.75}, {"from": "crime", "title": "contextual proximity", "to": "economy", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "evidence review", "width": 1.0}, {"from": "crime", "title": "contextual proximity", "to": "iffat idris", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "political elites/oligarchs", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "russia", "width": 2.25}, {"from": "crime", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "crime", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "crime prevention mechanisms", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "crime prevention mechanisms", "title": "Hubanova et al (2021) discuss in \u0027Information technologies in improving crime prevention mechanisms in the border regions of Southern Ukraine\u0027 how information and communication technologies can be used to enhance crime prevention efforts in border areas, but also highlight some challenges and limitations.", "to": "information technologies", "width": 1.0}, {"from": "crimea", "title": "contextual proximity", "to": "crisis in ukraine", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "development funds", "width": 0.75}, {"from": "crimea", "title": "contextual proximity", "to": "donbas", "width": 2.25}, {"from": "crimea", "title": "contextual proximity", "to": "eastern ukraine", "width": 0.75}, {"from": "crimea", "title": "contextual proximity", "to": "economic blockade", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "economy", "width": 1.0}, {"from": "crimea", "title": "contextual proximity", "to": "embezzlement and corruption for russian and crimean ocgs", "width": 0.75}, {"from": "crimea", "title": "contextual proximity", "to": "gangsters", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "heavily dependent on organised crime", "width": 0.75}, {"from": "crimea", "title": "By the 2000s, gangsters-turned-businessmen were increasingly dominant within Crimea (Galeotti, 2014b).", "to": "increasingly dominant within crimea", "width": 1.0}, {"from": "crimea", "title": "for large-scale infrastructure projects \u2013 these \u2018represent honeypots for the gangsters\u2019 (Galeotti, 2014b)", "to": "moscow", "width": 1.0}, {"from": "crimea", "title": "contextual proximity", "to": "non -slavic gangs", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "oligarchs", "width": 1.25}, {"from": "crimea", "title": "contextual proximity", "to": "opportunity for embezzlement and corruption", "width": 0.75}, {"from": "crimea", "title": "contextual proximity", "to": "organized crime", "width": 0.75}, {"from": "crimea", "title": "contextual proximity", "to": "organized criminal groups", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "organized criminals", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "russia", "width": 3.5}, {"from": "crimea", "title": "Although Crimea was a part of Ukraine, many of the most lucrative criminal businesses, such as trafficking narcotics and counterfeit or untaxed cigarettes, depended on relationships with Russian criminal networks. These links between Crimean OCGs (organized crime groups) and Russia would prove very significant when Yanukovych fled Ukraine, and Moscow decided to annex Crimea", "to": "russian connection to criminalization", "width": 1.0}, {"from": "crimea", "title": "contextual proximity", "to": "seizing property belonging to pro -", "width": 0.75}, {"from": "crimea", "title": "The Crimea in general and the port of Simferopol had, even before the collapse of the USSR, \u2018became free -wheeling havens for smuggling, black marketeering and a lucrative array of embezzlement schemes centering on the region\u2019s health spas and holiday resorts\u2019 (Galeotti, 2014b).", "to": "smuggling", "width": 1.0}, {"from": "crimea", "title": "contextual proximity", "to": "transnational crime", "width": 1.5}, {"from": "crimea", "title": "The combination of under-regulation and the need for business in Ukraine could lead to Crimea becoming a hub for illicit international financial flows, potentially attracting OCG members from other European countries if the rebellion in the east is defeated.,The ICG (2017) report \u0027Ukraine: Will the centre hold?\u0027 discusses the role of crime in Crimea, where Russian-backed separatist forces have been accused of engaging in criminal activities such as smuggling, extortion, and kidnapping.,contextual proximity", "to": "ukraine", "width": 6.75}, {"from": "crimea", "title": "contextual proximity", "to": "ukrainian amber", "width": 0.5}, {"from": "crimea", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "crimea", "title": "wide-ranging western sanctions have had a significant impact on crimea, as russia has tried to demonstrate the benefits of annexation by pumping vast resources into the region,contextual proximity", "to": "western sanctions", "width": 1.5}, {"from": "crimea", "title": "contextual proximity", "to": "western structures", "width": 0.5}, {"from": "crimea\u0027s annexation", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "crimea\u0027s annexation", "title": "contradictory event sequences", "to": "ukraine\u0027s sovereignty", "width": 1.0}, {"from": "crimea\u0027s annexation on, police and russia\u2019s federal security force (fsb)", "title": "brokered by Russian security forces between Crimean political elites", "to": "local organised criminal groups", "width": 1.0}, {"from": "crimea\u0027s annexation on, police and russia\u2019s federal security force (fsb)", "title": "contextual proximity", "to": "non -slavic gangs", "width": 0.5}, {"from": "crimea\u0027s criminal and political elites", "title": "Since Crimea became part of Russia, Crimea\u2019s criminal and political elites have had new opportunities for enrichment.", "to": "enrichment", "width": 1.0}, {"from": "crimea\u0027s criminal and political elites", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "crimean annexation", "title": "contextual proximity", "to": "organised criminal groups in crimea and russian political elites", "width": 0.5}, {"from": "crimean annexation", "title": "contextual proximity", "to": "organised criminal networks in russia", "width": 0.5}, {"from": "crimean annexation", "title": "contextual proximity", "to": "salem organised criminal group", "width": 1.0}, {"from": "crimean annexation", "title": "contextual proximity", "to": "sergei aksyonov", "width": 0.5}, {"from": "crimean government", "title": "The Crimean government accused of illegally seizing some 80,000 hectares of land and properties worth USD 110 million.", "to": "illegally seizing", "width": 1.0}, {"from": "crimean government", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "criminality", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "criminality", "title": "Criminality in Russia has also increased, seen in rises in drug and arms trafficking and criminal cases.", "to": "russia", "width": 1.0}, {"from": "criminals as agents and allies", "title": "Galeotti (2014b) argues in \u0027Commentary: Crime and Crimea - Criminals as Agents and Allies\u0027 that criminal networks have been increasingly involved in the conflict in eastern Ukraine, operating on both sides of the conflict and sometimes acting as intermediaries between the parties.,contextual proximity", "to": "ukraine", "width": 2.25}, {"from": "crisis in ukraine", "title": "contextual proximity", "to": "deep internal divisions", "width": 0.5}, {"from": "crisis in ukraine", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "crony capitalism", "title": "contextual proximity", "to": "icg", "width": 0.5}, {"from": "crony capitalism", "title": "Lough\u0027s Chatham House report discusses the challenge of dismantling \u0027systema\u0027, which represents Ukraine\u0027s system of crony capitalism.", "to": "ukraine", "width": 1.0}, {"from": "cyprus", "title": "Other countries, notably Cyprus, Latvia and Israel, have attracted international flows due to their greater efficiency. However, these countries are now curbing illicit financial flows under international pressure.", "to": "latvia", "width": 1.0}, {"from": "cyprus", "title": "contextual proximity", "to": "russia", "width": 0.75}, {"from": "cyprus", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "development funds", "title": "In the context provided, \u0027development funds\u0027 and \u0027opportunity for embezzlement and corruption\u0027 are related as development funds can potentially be embezzled or used for corrupt activities in Crimea due to closer ties between Russian and Crimean OCGs.", "to": "opportunity for embezzlement and corruption", "width": 1.0}, {"from": "divide", "title": "Milakovsky, in \u0027Ukraine\u0027s Divided House Still Stands: The Country Debates Whether Donbas Can Be Brought In From the Cold\u0027, discusses the division between eastern Ukraine and the rest of the country.,contextual proximity", "to": "ukraine", "width": 2.25}, {"from": "donbas", "title": "contextual proximity", "to": "donetsk", "width": 2.25}, {"from": "donbas", "title": "contextual proximity", "to": "donetsk region", "width": 2.25}, {"from": "donbas", "title": "The Donetsk People\u2019s Republic (DPR) is a separatist entity that operates in the Donetz Basin (Donbas).,contextual proximity", "to": "dpr", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "eastern ukraine", "width": 0.75}, {"from": "donbas", "title": "thousands have been displaced and the economy of donbas has been severely affected by ongoing conflict and an economic blockade,contextual proximity", "to": "economic blockade", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "economic situation", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "economy", "width": 1.0}, {"from": "donbas", "title": "contextual proximity", "to": "eu", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "gangs", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "highest level of criminal activity", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "homicides across ukraine", "width": 0.75}, {"from": "donbas", "title": "The ICG (International Crisis Group) has released a visual explainer on the conflict in Ukraine\u0027s Donbas region.,contextual proximity", "to": "icg", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "kiev", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "legal nihilism", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "lpr", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "luhansk", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "mila kovsky", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "nabu", "width": 1.0}, {"from": "donbas", "title": "contextual proximity", "to": "napc", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "ngca", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "ocg", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "ocgs", "width": 2.25}, {"from": "donbas", "title": "contextual proximity", "to": "oligarchs", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "organized criminal groups", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "organized criminals", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "political groups", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "prisons", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "prisons and labour colonies", "width": 0.75}, {"from": "donbas", "title": "Before the Soviet collapse, the concept of \u0027rule of law\u0027 was rare in Donbas according to Kosicki and Nesterenko (2014). They compare it to a \u0027mafia state\u0027, controlled neither by Kiev nor Moscow, and organized crime dominated the cultural and social life of the region.,contextual proximity", "to": "rule of law", "width": 2.0}, {"from": "donbas", "title": "contextual proximity", "to": "russia", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "russia backing", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "russia-based insurgency", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "sapo", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "sbi", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "separatists installed by the krem lin", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "significant structural factors driving insurgency", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "soc", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "soc ace", "width": 2.5}, {"from": "donbas", "title": "contextual proximity", "to": "structural factors", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "total crime", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "transnational crime", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "trench war", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "ubo", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "ukraine", "width": 4.0}, {"from": "donbas", "title": "contextual proximity", "to": "ukraine\u0027s gangsters", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "ukraine\u0027s political and economic leaders", "width": 1.5}, {"from": "donbas", "title": "contextual proximity", "to": "weak governance", "width": 0.75}, {"from": "donbas", "title": "contextual proximity", "to": "western sanctions", "width": 0.5}, {"from": "donbas", "title": "contextual proximity", "to": "western structures", "width": 0.5}, {"from": "donbas conflict", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "donbas conflict", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "donbas conflict", "title": "Galeotti (2014a) discusses how the invasion of Ukraine is shaking up the global crime scene, particularly in relation to the Donbas conflict.", "to": "global crime scene", "width": 1.0}, {"from": "donbas region", "title": "contextual proximity", "to": "putin", "width": 0.5}, {"from": "donbas region", "title": "contextual proximity", "to": "russia", "width": 1.0}, {"from": "donbas region", "title": "contextual proximity", "to": "trade", "width": 0.5}, {"from": "donbas region", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "donbas region", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "donbas region", "title": "Lack of access to global markets via Ukraine is causing many once functioning mines in the Donbas region to flood and factories to rust.", "to": "mines", "width": 1.0}, {"from": "donbas regional business oligarchs", "title": "contextual proximity", "to": "oligarchs", "width": 0.5}, {"from": "donbas regional business oligarchs", "title": "contextual proximity", "to": "organised criminal groups", "width": 1.0}, {"from": "donbas regional business oligarchs", "title": "contextual proximity", "to": "political connections", "width": 1.5}, {"from": "donbas regional business oligarchs", "title": "contextual proximity", "to": "political elites", "width": 0.5}, {"from": "donbas regional business oligarchs", "title": "Provide money and commercial ties to both sides in the struggle for resources and political power.,contextual proximity", "to": "pro-russia ukrainian politicians", "width": 1.5}, {"from": "donbas regional business oligarchs", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "donetsk", "title": "contextual proximity", "to": "donetsk region", "width": 0.75}, {"from": "donetsk", "title": "contextual proximity", "to": "ocgs", "width": 0.75}, {"from": "donetsk", "title": "Former Soviet Union built lots of penal colonies in Donetsk, and released prisoners remained there becoming \u0027fodder for an emerging criminal industry based in late-night entertainment, gambling, and trafficking\u0027 (Kosicki \u0026 Nesterenko, 2014).", "to": "prisons and labour colonies", "width": 1.0}, {"from": "donetsk", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "donetsk", "title": "contextual proximity", "to": "ukraine\u0027s political and economic leaders", "width": 0.5}, {"from": "donetsk region", "title": "contextual proximity", "to": "highest level of criminal activity", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "homicides across ukraine", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "legal nihilism", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "ocgs", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "prisons and labour colonies", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "rule of law", "width": 0.75}, {"from": "donetsk region", "title": "contextual proximity", "to": "total crime", "width": 0.75}, {"from": "dpr", "title": "contextual proximity", "to": "nabu", "width": 0.5}, {"from": "dpr", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "dpr", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "dr iffat idris", "title": "contextual proximity", "to": "gsdrc", "width": 1.5}, {"from": "dr iffat idris", "title": "Iffat Idris is a Research Fellow at the GSDRC, International Development Department, University of Birmingham.,contextual proximity", "to": "iffat idris", "width": 2.25}, {"from": "dr iffat idris", "title": "contextual proximity", "to": "international development department", "width": 0.5}, {"from": "dr iffat idris", "title": "contextual proximity", "to": "research fellow", "width": 0.5}, {"from": "dr iffat idris", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "drug sales", "title": "Galeotti (2014a and 2014b) identified that the situation in Donbas region has led to an increase in drug sales as part of organized crime activities in other parts of Ukraine.,contextual proximity", "to": "rise in organized crime in rest of ukraine", "width": 1.75}, {"from": "drug trafficking routes", "title": "Ukraine\u0027s location astride several important drug trafficking routes into Western Europe leaves it vulnerable as an important transit country for drug traffickers into the European Union\u2019s illicit drug market.", "to": "ukraine", "width": 1.0}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "elderly residents", "width": 1.25}, {"from": "eastern ukraine", "title": "The paper titled \u0027Evidence Review\u0027 discusses corruption, crime, and conflict in eastern Ukraine. Eastern Ukraine is a region that has experienced significant instances of corruption, crime, and conflict.,contextual proximity", "to": "evidence review", "width": 2.5}, {"from": "eastern ukraine", "title": "The text mentions that both statelets get their gas from Gazprom, suggesting a correlation between Gazprom and eastern Ukraine.,contextual proximity", "to": "gazprom", "width": 2.25}, {"from": "eastern ukraine", "title": "The text mentions that the government and military salaries are paid in eastern Ukraine. Hence, a connection can be assumed between government salaries and the region.,contextual proximity", "to": "government salaries", "width": 2.25}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "government-controlled territory", "width": 1.25}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "humanitarian aid", "width": 1.25}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "icg", "width": 0.5}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "iffat idris", "width": 0.75}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "international sanctions", "width": 0.5}, {"from": "eastern ukraine", "title": "Kosicki and Nesterenko from The New Republic describe Eastern Ukraine as a mafia state for years.", "to": "mafia state", "width": 1.0}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "moscow", "width": 1.5}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "odessa", "width": 0.5}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "regular russian army", "width": 0.5}, {"from": "eastern ukraine", "title": "The context mentions that Russia spends roughly USD 1.5-2 billion annually on the de facto republics in eastern Ukraine, indicating a connection between Russia and the region.,The Russian aggression in eastern Ukraine has created a new vulnerability for drug transit through the region, potentially spreading OCG members to other parts of Europe and North America.,contextual proximity", "to": "russia", "width": 7.0}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "separatist forces", "width": 1.0}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "sevastopol", "width": 0.5}, {"from": "eastern ukraine", "title": "smuggling of illicit goods into Europe has risen since conflict in Donbas and annexation of Crimea.,contextual proximity", "to": "smuggling", "width": 1.75}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "smuggling hub", "width": 0.75}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "social programs", "width": 1.25}, {"from": "eastern ukraine", "title": "contextual proximity", "to": "ukraine", "width": 2.5}, {"from": "economic blockade", "title": "contextual proximity", "to": "economy", "width": 0.5}, {"from": "economic blockade", "title": "contextual proximity", "to": "russia", "width": 0.75}, {"from": "economic blockade", "title": "contextual proximity", "to": "trade", "width": 0.5}, {"from": "economic blockade", "title": "The Ukrainian government imposed an economic blockade in areas under separatist control.", "to": "ukrainian government", "width": 1.0}, {"from": "economic prosperity", "title": "negative impact,contextual proximity", "to": "ongoing conflict", "width": 1.5}, {"from": "economic recession", "title": "This in turn led to increased chaos as \u2018rival bands vying for turf filled the vacuum left by consolidated protection racket that disintegrated after Yanukovych fled\u2019 (Radio Europe, cited in Home Office, 2019: 20).,contextual proximity", "to": "ukrainian amber", "width": 1.5}, {"from": "economy", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "economy", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "economy", "title": "contextual proximity", "to": "western sanctions", "width": 0.5}, {"from": "economy", "title": "contextual proximity", "to": "western structures", "width": 0.5}, {"from": "elderly residents", "title": "The text mentions that thousands of elderly residents subsist by maintaining an address in government-controlled territory, which allows them to continue receiving their government pensions. This indicates a connection between the elderly residents and government-controlled territory in eastern Ukraine.", "to": "government-controlled territory", "width": 1.0}, {"from": "elderly residents", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "embezzlement", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "embezzlement", "title": "causative relationship", "to": "russian development funds", "width": 1.0}, {"from": "enrichment", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "eu", "title": "contextual proximity", "to": "nabu", "width": 0.5}, {"from": "eu", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "eu", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "euromaidan protests", "title": "contextual proximity", "to": "senior officials", "width": 0.5}, {"from": "euromaidan protests", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "euromaidan protests", "title": "contextual proximity", "to": "yanukovych", "width": 1.0}, {"from": "euromaidan protests", "title": "contextual proximity", "to": "yanukovych\u2019s administration", "width": 0.5}, {"from": "euromaidan protests", "title": "contextual proximity", "to": "yanukovych\u2019s party of the regions", "width": 0.5}, {"from": "europe", "title": "contextual proximity", "to": "odessa", "width": 0.5}, {"from": "europe", "title": "Preliminary reports indicate an increase in smuggling, including Ukrainian goods, cocaine from Latin America and Afghanistan, and stolen cars from Scandinavia, being moved into Europe through Ukraine.,contextual proximity", "to": "smuggling", "width": 1.5}, {"from": "europe", "title": "contextual proximity", "to": "smuggling hub", "width": 0.5}, {"from": "evidence review", "title": "contextual proximity", "to": "iffat idris", "width": 0.5}, {"from": "expropriation", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "expropriation", "title": "All properties belonging to Ihor Kolomoyskiy, once Ukraine\u2019s fourth -richest man and a supporter of Ukraine, were seized under the orders of the Crimean State Council.", "to": "ihor kolomoyskiy", "width": 1.0}, {"from": "extremist groups", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "extremist groups", "title": "Medvedchuk has been accused by Ukrainian officials of financing the extremist groups that organized the violent uprising in eastern Ukraine.,contextual proximity", "to": "viktor medvedchuk", "width": 1.5}, {"from": "fcdo", "title": "contextual proximity", "to": "soc ace", "width": 1.5}, {"from": "fcdo", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "financial sector under-regulation", "title": "contextual proximity", "to": "odessa", "width": 0.5}, {"from": "financial sector under-regulation", "title": "contextual proximity", "to": "smuggling", "width": 0.5}, {"from": "financial sector under-regulation", "title": "contextual proximity", "to": "smuggling hub", "width": 0.5}, {"from": "financial sector under-regulation", "title": "Ukraine\u0027s financial sector is notoriously under-regulated .", "to": "ukraine", "width": 1.0}, {"from": "free trade", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "free trade", "title": "restricted relationship", "to": "trade limitations", "width": 1.0}, {"from": "functioning of the state", "title": "Ash et al (2017: 77) write: \u0027It is clear that the fusion of money and power since independence in 1991 transformed  Ukraine\u2019s law enforcement institutions, so that their original task of protecting the Soviet system from within became one of supporting criminal activity by the new economic and political elites. Organized crime became synonymous with the functioning of the state \u0027. ,contextual proximity", "to": "organised crime", "width": 1.5}, {"from": "gangs", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "gangs", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "gangsters", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "gangsters", "title": "In Crimea, gangsters have transformed into successful businessmen (Galeotti, 2014b).", "to": "turned -businessmen", "width": 1.0}, {"from": "gangsters", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "gangsters", "title": "According to Galeotti (2014a), the potential black hole created by Russia\u0027s annexation of Crimea and ongoing conflict in eastern Ukraine makes Ukraine an ideal hub for the global underworld due to its resources and facilities as a modern, industrial nation.", "to": "world\u0027s underworld", "width": 1.0}, {"from": "gazprom", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "global crime scene", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "global crime scene", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "global integrity", "title": "contextual proximity", "to": "soc ace", "width": 1.5}, {"from": "global integrity", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "global money laundering centre", "title": "contextual proximity", "to": "political patronage", "width": 0.5}, {"from": "global money laundering centre", "title": "Crimea and Ukraine could become a global money laundering centre.", "to": "ukraine", "width": 1.0}, {"from": "government", "title": "contextual proximity", "to": "soc ace", "width": 1.5}, {"from": "government", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "government salaries", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "government-controlled territory", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "greece", "title": "contextual proximity", "to": "odessa", "width": 0.5}, {"from": "greece", "title": "Illicit goods are being moved eastward into Russia and also being re-exported through Ukraine into Greece and the Balkans.,contextual proximity", "to": "smuggling", "width": 1.5}, {"from": "greece", "title": "contextual proximity", "to": "smuggling hub", "width": 0.5}, {"from": "gsdrc", "title": "contextual proximity", "to": "humanitarian response", "width": 1.5}, {"from": "gsdrc", "title": "contextual proximity", "to": "iffat idris", "width": 7.5}, {"from": "gsdrc", "title": "contextual proximity", "to": "international development department", "width": 3.0}, {"from": "gsdrc", "title": "contextual proximity", "to": "modern slavery", "width": 1.5}, {"from": "gsdrc", "title": "contextual proximity", "to": "preventing/countering violent extremism (p/cve)", "width": 1.5}, {"from": "gsdrc", "title": "contextual proximity", "to": "research fellow", "width": 3.0}, {"from": "gsdrc", "title": "contextual proximity", "to": "university of birmingham", "width": 3.0}, {"from": "health spas", "title": "Both health spas and holiday resorts are found in Crimea, which has seen an increase in organized crime activity post-independence. In particular, Simferopol has been fought over by rival gangs, the Bashmaki and Salem, who act as both entrepreneurs and predators, forcing local businesses to pay tribute and sell their goods (Galeotti, 2014b). This has facilitated the dominance of these gangsters-turned-businessmen in Crimea, as Kiev has shown little interest in promoting good governance and economic prosperity in the region.", "to": "holiday resorts\u0027", "width": 1.0}, {"from": "heroin", "title": "Heroin from Afghanistan is trafficked through Russia, the Caucasus, and Turkey before passing through Ukraine.", "to": "russia", "width": 1.0}, {"from": "home office", "title": "contextual proximity", "to": "international narcotics control strategy report", "width": 1.0}, {"from": "home office", "title": "contextual proximity", "to": "money laundering", "width": 0.5}, {"from": "how to end the war in ukraine", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "how to end the war in ukraine", "title": "Pifer outlines in \u0027How to End the War in Ukraine: What an American - Led Peace Plan Should Look Like\u0027 his proposal for ending the conflict between the Ukrainian government and Russian-backed separatists.", "to": "war in ukraine", "width": 1.0}, {"from": "human rights practices", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "humanitarian aid", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "humanitarian assistance", "title": "opposite relationship", "to": "neglect", "width": 1.0}, {"from": "humanitarian assistance", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "humanitarian response", "title": "contextual proximity", "to": "iffat idris", "width": 1.25}, {"from": "humanitarian response", "title": "contextual proximity", "to": "international development department", "width": 0.5}, {"from": "humanitarian response", "title": "contextual proximity", "to": "research fellow", "width": 0.5}, {"from": "humanitarian response", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "icg", "title": "contextual proximity", "to": "jensen", "width": 0.5}, {"from": "icg", "title": "contextual proximity", "to": "mafia state", "width": 0.5}, {"from": "icg", "title": "contextual proximity", "to": "minsk peace process", "width": 0.5}, {"from": "icg", "title": "contextual proximity", "to": "moscow", "width": 0.5}, {"from": "icg", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "icg (2017)", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "iffat idris", "title": "contextual proximity", "to": "international development department", "width": 2.5}, {"from": "iffat idris", "title": "contextual proximity", "to": "modern slavery", "width": 1.25}, {"from": "iffat idris", "title": "contextual proximity", "to": "preventing/countering violent extremism (p/cve)", "width": 1.25}, {"from": "iffat idris", "title": "contextual proximity", "to": "research fellow", "width": 2.5}, {"from": "iffat idris", "title": "contextual proximity", "to": "university of birmingham", "width": 2.5}, {"from": "ihor kolomoyskiy", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "illegal weapons", "title": "contextual proximity", "to": "russia", "width": 0.75}, {"from": "illegal weapons", "title": "Sales of illegal weapons have doubled in Ukraine in the past year due to the conflict.,contextual proximity", "to": "ukraine", "width": 1.75}, {"from": "illegally seizing", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "information technologies", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "infrastructure", "title": "political actors attempted to embed loyal agents in the institutions through legislative changes", "to": "legislative changes", "width": 1.0}, {"from": "institutions", "title": "political actors attempted to embed loyal agents in the institutions", "to": "loyal agents", "width": 1.0}, {"from": "insurgents", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "insurgents", "title": "During the insurgency, the police, long known for their corruption, fought alongside the insurgents in eastern Ukraine.", "to": "police", "width": 1.0}, {"from": "international development department", "title": "contextual proximity", "to": "modern slavery", "width": 0.5}, {"from": "international development department", "title": "contextual proximity", "to": "preventing/countering violent extremism (p/cve)", "width": 0.5}, {"from": "international development department", "title": "contextual proximity", "to": "research fellow", "width": 1.0}, {"from": "international development department", "title": "contextual proximity", "to": "university of birmingham", "width": 1.0}, {"from": "international narcotics control strategy report", "title": "contextual proximity", "to": "international narcotics control strategy report (ussd binle a2)", "width": 1.0}, {"from": "international narcotics control strategy report", "title": "contextual proximity", "to": "money laundering", "width": 2.0}, {"from": "international narcotics control strategy report", "title": "contextual proximity", "to": "transparency international", "width": 1.0}, {"from": "international narcotics control strategy report (ussd binle a2)", "title": "contextual proximity", "to": "money laundering", "width": 0.5}, {"from": "international sanctions", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "jensen", "title": "According to Jensen\u0027s research from the NATO New Research Division, Moscow plays a role in the Donbas during the Minsk peace process.", "to": "moscow", "width": 1.0}, {"from": "kickbacks, sweetheart deals, and attrition of construction materials", "title": "contextual proximity", "to": "smuggling", "width": 0.75}, {"from": "kiev", "title": "Kiev has shown little interest in promoting good governance and economic prosperity in the region, which has facilitated the dominance of organized crime in Crimea (Galeotti, 2014b).", "to": "little interest in promoting good governance and economic prosperity in the region", "width": 1.0}, {"from": "kiev", "title": "conflicting parties in the conflict", "to": "moscow", "width": 1.0}, {"from": "kiev", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "large population", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "large population", "title": "inverse relationship", "to": "thousands displaced", "width": 1.0}, {"from": "latvia", "title": "contextual proximity", "to": "russia", "width": 0.75}, {"from": "latvia", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "law-abiding citizens", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "law-abiding citizens", "title": "contradictory relationship", "to": "organised criminal groups", "width": 1.0}, {"from": "legislation", "title": "criminal penalties for corruption have not been effectively implemented", "to": "effective implementation", "width": 1.0}, {"from": "list of areas allowed to run gambling ventures", "title": "contextual proximity", "to": "non -slavic gangs", "width": 0.5}, {"from": "list of areas allowed to run gambling ventures", "title": "Putin added Crimea to the list of areas allowed to run gambling ventures: organised gambling was outlawed across Russia i n 2009 as \u2018a dangerous addiction and a magnet for organized crime\u2019, but a few locations were allowed to build", "to": "organised gambling", "width": 1.0}, {"from": "local government and politics", "title": "In Crimea, organized criminal groups have moved into both above-board businesses and local government and politics. According to a former prosecutor in the region, \u0027every government level of Crimea was criminalized\u0027 (Viktor Shemchuk, cited in Galeotti, 2014b).,contextual proximity", "to": "organized criminals", "width": 1.5}, {"from": "local militias", "title": "In eastern Ukraine, criminals have been sworn in as members of local militias and even risen to senior ranks during the insurgency.,contextual proximity", "to": "ocgs", "width": 1.5}, {"from": "local organised criminal groups", "title": "contextual proximity", "to": "non -slavic gangs", "width": 0.5}, {"from": "lpr", "title": "contextual proximity", "to": "nabu", "width": 0.5}, {"from": "lpr", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "lpr", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "luhansk", "title": "contextual proximity", "to": "ocgs", "width": 0.5}, {"from": "luhansk", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "luhansk people\u2019s republic (lpr)", "title": "fought back against separatists in Donbas region from August 2014, resulting in retaking most of the region", "to": "ukrainian forces", "width": 1.0}, {"from": "mines", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "mines", "title": "contextual proximity", "to": "trade", "width": 0.5}, {"from": "modern slavery", "title": "contextual proximity", "to": "research fellow", "width": 0.5}, {"from": "modern slavery", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "money laundering", "title": "contextual proximity", "to": "transparency international", "width": 0.5}, {"from": "moscow", "title": "contextual proximity", "to": "non -slavic gangs", "width": 0.5}, {"from": "moscow", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "moscow", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "moscow", "title": "Towards the end of 2014, Russia began to provide money for", "to": "significant subsidies and other support", "width": 1.0}, {"from": "moscow -based crime networks", "title": "contextual proximity", "to": "smuggling", "width": 0.75}, {"from": "nabu", "title": "contextual proximity", "to": "napc", "width": 0.5}, {"from": "nabu", "title": "contextual proximity", "to": "ngca", "width": 0.5}, {"from": "nabu", "title": "contextual proximity", "to": "ocg", "width": 0.5}, {"from": "nabu", "title": "The Specialized Anti -Corruption Prosecutor\u2019s Office  (Ukraine) (SAPO) is a government institution that investigates cases related to the National Anti -Corruption Bureau of Ukraine (NABU).,contextual proximity", "to": "sapo", "width": 1.5}, {"from": "nabu", "title": "contextual proximity", "to": "sbi", "width": 0.5}, {"from": "nabu", "title": "contextual proximity", "to": "soc", "width": 1.5}, {"from": "nabu", "title": "contextual proximity", "to": "soc ace", "width": 2.5}, {"from": "nabu", "title": "contextual proximity", "to": "ubo", "width": 0.5}, {"from": "nabu", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "napc", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "napc", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "neglect", "title": "contextual proximity", "to": "ongoing conflict", "width": 0.5}, {"from": "ngca", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "ngca", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "organised gambling", "width": 0.5}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "private hands", "width": 0.5}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "russia\u0027s federal security force (fsb)", "width": 0.5}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "slavic gangs\u0027", "width": 0.5}, {"from": "non -slavic gangs", "title": "especially Tatars and North Caucasians\u2019,contextual proximity", "to": "tatar groups", "width": 1.5}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "tatar organisations", "width": 0.5}, {"from": "non -slavic gangs", "title": "contextual proximity", "to": "worth usd 110 million", "width": 0.5}, {"from": "ocg", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "ocg", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "ocgs", "title": "contextual proximity", "to": "police", "width": 0.5}, {"from": "ocgs", "title": "contextual proximity", "to": "political groups", "width": 0.5}, {"from": "ocgs", "title": "contextual proximity", "to": "prisons", "width": 0.5}, {"from": "ocgs", "title": "Links forged between Ukrainian OCGs and those in Russia/Crimea following the annexation of Crimea, as noted by Galeotti (2014b).", "to": "russian/crimea", "width": 1.0}, {"from": "ocgs", "title": "contextual proximity", "to": "smuggling", "width": 0.75}, {"from": "ocgs", "title": "contextual proximity", "to": "ukraine", "width": 1.0}, {"from": "ocgs", "title": "contextual proximity", "to": "ukrainian government", "width": 0.5}, {"from": "odessa", "title": "contextual proximity", "to": "reducing charges on illicit goods", "width": 0.5}, {"from": "odessa", "title": "contextual proximity", "to": "sevastopol", "width": 0.5}, {"from": "odessa", "title": "contextual proximity", "to": "smuggling", "width": 1.0}, {"from": "odessa", "title": "contextual proximity", "to": "smuggling hub", "width": 1.0}, {"from": "odessa", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "offshore tax havens", "title": "contextual proximity", "to": "ukrainian amber", "width": 0.5}, {"from": "offshore tax havens", "title": "Transactions are routed through offshore tax havens to obscure ownership or mask illicit profits.", "to": "transactions", "width": 1.0}, {"from": "oleksandr onyshchenko", "title": "Onyshchenko has advanced Kremlin interests by accusing the Poroshenko government of corruption.", "to": "poroshenko government", "width": 1.0}, {"from": "oleksandr onyshchenko", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "oleksandr onyshchenko", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "oligarchs", "title": "contextual proximity", "to": "organised crime", "width": 0.5}, {"from": "oligarchs", "title": "contextual proximity", "to": "organised criminal groups", "width": 0.5}, {"from": "oligarchs", "title": "contextual proximity", "to": "political connections", "width": 0.75}, {"from": "oligarchs", "title": "contextual proximity", "to": "russia", "width": 1.0}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "organised criminal groups", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "russian development funds", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "russian forces", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "self-sufficient economy", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "stable peace", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "subsidies", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "thousands displaced", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "trade limitations", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "transparency", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "ukraine\u0027s sovereignty", "width": 0.5}, {"from": "ongoing conflict", "title": "contextual proximity", "to": "ukrainian forces", "width": 0.5}, {"from": "organised crime", "title": "Sergei Aksyonov, official head of Russian Crimea, was associated with the Salem criminal gang.,contextual proximity", "to": "sergei aksyonov", "width": 1.5}, {"from": "organised crime", "title": "contextual proximity", "to": "state weakening", "width": 0.5}, {"from": "organised crime", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "organised crime", "title": "The Crimean parliament speaker Vladimir Konstantinov has also been persistently linked with organized crime connections and allegations of construction and real estate fraud.,contextual proximity", "to": "vladimir konstantinov", "width": 1.5}, {"from": "organised criminal groups", "title": "contextual proximity", "to": "political connections", "width": 1.5}, {"from": "organised criminal groups", "title": "contextual proximity", "to": "political elites", "width": 0.5}, {"from": "organised criminal groups", "title": "contextual proximity", "to": "pro-russia ukrainian politicians", "width": 0.5}, {"from": "organised criminal groups", "title": "Political connections and rewards those who demonstrate utility and loyalty in return for their support and the provision of political support to their allies, self-sustaining loop characteristic of Russian political system.,contextual proximity", "to": "russia", "width": 1.5}, {"from": "organised criminal groups in crimea and russian political elites", "title": "contextual proximity", "to": "salem organised criminal group", "width": 0.5}, {"from": "organised criminal networks in russia", "title": "\u0027although crimea was part of ukraine, many of the most lucrative criminal businesses, such as trafficking narcotics and counterfeit or untaxed cigarettes, depended on relationships with the russian criminal networks\u0027,contextual proximity", "to": "salem organised criminal group", "width": 1.5}, {"from": "organized crime", "title": "Organized crime in Simferopol has assumed an increasingly visible and violent form, with two rival gangs, the Bashmaki and Salem, fighting over the city. These gangsters act as both entrepreneurs and predators, forcing local businesses to pay tribute and sell their goods (Galeotti, 2014b).", "to": "simferopol", "width": 1.0}, {"from": "organized crime", "title": "The Home Office (2019) report \u0027Ukraine: Organised crime and corruption\u0027 highlights the prevalence of organized crime in Ukraine, including the involvement of criminal groups in various aspects of society such as politics, law enforcement, and business.,contextual proximity", "to": "ukraine", "width": 2.25}, {"from": "organized crime", "title": "Amber mining is another sector dominated by criminal gangs. The ICG reported in 2017 that Ukrainian amber began to attract the interest of organized crime in the 1990s; strong protection rackets reportedly overseen by figures close to the government emerged in the 2000s, when a rise in the global price of amber stimulated illicit mining.,contextual proximity", "to": "ukrainian amber", "width": 1.5}, {"from": "organized criminal groups", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "organized criminals", "title": "contextual proximity", "to": "rule of law", "width": 0.5}, {"from": "organized criminals", "title": "contextual proximity", "to": "russian connection to criminalization", "width": 0.5}, {"from": "peace process", "title": "The ICG (2020) \u0027Peace in Ukraine III: The costs of war in Donbas\u0027 examines the challenges and prospects for a peaceful resolution to the conflict in eastern Ukraine, and discusses some potential avenues for negotiations.,contextual proximity", "to": "ukraine", "width": 2.25}, {"from": "pervasive corruption", "title": "many officials engaged in corrupt practices with impunity", "to": "corrupt practices", "width": 1.0}, {"from": "political connections", "title": "contextual proximity", "to": "political elites", "width": 0.75}, {"from": "political connections", "title": "contextual proximity", "to": "pro-russia ukrainian politicians", "width": 0.75}, {"from": "political connections", "title": "contextual proximity", "to": "russia", "width": 0.75}, {"from": "political groups", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "political patronage", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "political patronage", "title": "contextual proximity", "to": "sevastopol", "width": 0.5}, {"from": "political patronage", "title": "contextual proximity", "to": "smuggling", "width": 0.5}, {"from": "political patronage", "title": "contextual proximity", "to": "smuggling hub", "width": 0.5}, {"from": "political patronage", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "poroshenko government", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "poroshenko government", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "preventing/countering violent extremism (p/cve)", "title": "contextual proximity", "to": "research fellow", "width": 0.5}, {"from": "preventing/countering violent extremism (p/cve)", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "prisons", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "private hands", "title": "much of which already appears to have made its way into", "to": "worth usd 110 million", "width": 1.0}, {"from": "protection racketeering", "title": "Galeotti (2014a and 2014b) identified that the situation in Donbas region has led to an increase in protection racketeering as part of organized crime activities in other parts of Ukraine.,contextual proximity", "to": "rise in organized crime in rest of ukraine", "width": 1.75}, {"from": "putin", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "putin", "title": "contextual proximity", "to": "transnational crime", "width": 1.0}, {"from": "putin", "title": "desire to bolster his support at home due to ouster of Yanukovych and Ukraine\u2019s moves towards the EU", "to": "ukraine\u0027s moves towards eu", "width": 1.0}, {"from": "putin", "title": "Medvedchuk serves as intermediary between Kiev and Kremlin appointees in the Donbas and is widely seen as one of the key Ukrainian oligarchs supporting Putin.,contextual proximity", "to": "viktor medvedchuk", "width": 1.5}, {"from": "reducing charges on illicit goods", "title": "contextual proximity", "to": "smuggling", "width": 0.5}, {"from": "reducing charges on illicit goods", "title": "contextual proximity", "to": "smuggling hub", "width": 0.5}, {"from": "regular russian army", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "research", "title": "SOC ACE conducts research in various fields related to international development.,contextual proximity", "to": "soc ace", "width": 1.75}, {"from": "research fellow", "title": "contextual proximity", "to": "university of birmingham", "width": 1.0}, {"from": "research programme", "title": "The text mentions that SOC ACE is a research programme, as evident from the sentence \u0027SOC ACE research programme aims to help \u2018unlock the black box of political will\u2019 for tackling serious organized crime, illicit finance and transnational corruption through research that informs politically feasible, technically sound interventions and strategies.\u0027,contextual proximity", "to": "soc ace", "width": 2.5}, {"from": "research programme", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "resilience", "title": "contextual proximity", "to": "russia", "width": 0.5}, {"from": "resilience", "title": "Boulegue and Lutsevych (2020) discuss the concept of resilience in Ukraine in their article \u0027Resilient Ukraine: Safeguarding society from Russian aggression\u0027. This analysis explores how Ukraine can become more resilient to Russian aggression.,contextual proximity", "to": "ukraine", "width": 1.75}, {"from": "rest of country", "title": "As Rostov is a gateway to the rest of the country, crime introduced into the country there has spread, leading to an increase in criminal cases from 5,000 in 2013 to 8,000 in 2015 (Jensen, 2017).,contextual proximity", "to": "southern russia", "width": 1.5}, {"from": "rest of country", "title": "contextual proximity", "to": "ukraine border", "width": 0.5}, {"from": "rise in organized crime in rest of ukraine", "title": "contextual proximity", "to": "using fake documents and corrupt officials to steal property", "width": 0.75}, {"from": "rostov oblast", "title": "The Russian aggression in eastern Ukraine has led to the spread of criminality to Russia, notably Rostov Oblast just across the Ukraine-Russia border, which has become a major centre of criminal activity.,contextual proximity", "to": "russia", "width": 1.75}, {"from": "rostov oblast", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "russia", "title": "justifies its actions in the region on the grounds that there are around eight million ethnic Russians who need protection", "to": "ethnic russians in ukraine", "width": 1.0}, {"from": "russia", "title": "contextual proximity", "to": "separatist forces", "width": 0.5}, {"from": "russia", "title": "contextual proximity", "to": "separatist-held areas", "width": 0.5}, {"from": "russia", "title": "contextual proximity", "to": "social programs", "width": 0.5}, {"from": "russia", "title": "Businesses in the breakaway regions cannot trade with entities located either in Russia or government-controlled Ukraine due to Moscow\u0027s non-recognition of their independence.,contextual proximity", "to": "trade", "width": 2.0}, {"from": "russia", "title": "contextual proximity", "to": "transnational crime", "width": 1.5}, {"from": "russia", "title": "The conflict in eastern Ukraine has led to a deterioration in cross-border cooperation to combat crime.,contextual proximity", "to": "ukraine", "width": 6.25}, {"from": "russia", "title": "contextual proximity", "to": "ukrainian government", "width": 0.5}, {"from": "russia", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "russia border", "title": "contextual proximity", "to": "southern russia", "width": 0.5}, {"from": "russia border", "title": "These borders have become major centres of criminal activity due to the conflict between Ukraine and Russia, leading to a rise in drug and arms trafficking and criminal activities in both countries.,contextual proximity", "to": "ukraine border", "width": 1.5}, {"from": "russia\u0027s federal security force (fsb)", "title": "Crimea\u0027s annexation on, police and Russia\u2019s Federal Security Force (FSB) have been cracking down on Tatar organisations", "to": "tatar organisations", "width": 1.0}, {"from": "russia-based insurgency", "title": "contextual proximity", "to": "ukraine\u0027s political and economic leaders", "width": 0.5}, {"from": "russian army", "title": "provided extensive material backing including training, unit leadership, fuel, ammunition, armor, artillery, rocket launchers, and air defense systems to prevent defeat in Donbas region", "to": "separatists", "width": 1.0}, {"from": "russian forces", "title": "opposing military entities", "to": "ukrainian forces", "width": 1.0}, {"from": "russian intervention in ukraine", "title": "led to Putin\u2019s approval ratings rising to over 80%", "to": "putin\u0027s approval ratings", "width": 1.0}, {"from": "russian/crimea", "title": "contextual proximity", "to": "smuggling", "width": 0.75}, {"from": "salem organised criminal group", "title": "contextual proximity", "to": "sergei aksyonov", "width": 0.5}, {"from": "sapo", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "sapo", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "sbi", "title": "contextual proximity", "to": "soc", "width": 0.75}, {"from": "sbi", "title": "contextual proximity", "to": "soc ace", "width": 1.25}, {"from": "self-sufficient economy", "title": "counteracting relationship", "to": "subsidies", "width": 1.0}, {"from": "senior officials", "title": "contextual proximity", "to": "yanukovych", "width": 0.5}, {"from": "senior officials", "title": "There have been no convictions of senior officials from the administration of former president Viktor Yanukovych, despite overwhelming evidence that", "to": "yanukovych\u2019s administration", "width": 1.0}, {"from": "separatist-held areas", "title": "Trade across government and separatist-held areas fell even further due to the economic blockade imposed by the Ukrainian government.,contextual proximity", "to": "trade", "width": 1.5}, {"from": "serious organized crime", "title": "SOC ACE is a research programme aimed at tackling serious organized crime through politically feasible, technically sound interventions and strategies, as stated in the given context.,contextual proximity", "to": "soc ace", "width": 2.5}, {"from": "serious organized crime", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "sevastopol", "title": "contextual proximity", "to": "smuggling", "width": 0.75}, {"from": "sevastopol", "title": "contextual proximity", "to": "smuggling hub", "width": 0.75}, {"from": "sevastopol", "title": "contextual proximity", "to": "ukraine", "width": 0.5}, {"from": "simferopol", "title": "The port of Simferopol was turned into a big smuggling hub in place of Odessa in Ukraine, providing opportunities for Russian OCGs.,contextual proximity", "to": "smuggling", "width": 1.75}, {"from": "smuggling", "title": "contextual proximity", "to": "smuggling hub", "width": 1.25}, {"from": "smuggling", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "smuggling", "title": "contextual proximity", "to": "ukrainian amber", "width": 0.5}, {"from": "smuggling", "title": "contextual proximity", "to": "violent offences", "width": 0.75}, {"from": "smuggling hub", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "soas", "title": "contextual proximity", "to": "soc ace", "width": 1.5}, {"from": "soas", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "soc", "title": "Serious Organised Crime Anti -Corruption Evidence (SOC ACE) is a type of Serious Organised Crime (SOC), which includes corruption and organised crime.,contextual proximity", "to": "soc ace", "width": 4.75}, {"from": "soc", "title": "contextual proximity", "to": "ubo", "width": 0.75}, {"from": "soc", "title": "contextual proximity", "to": "ukraine", "width": 0.75}, {"from": "soc ace", "title": "The Twitter handle @SOCACE_research is associated with the SOC ACE research department at the University of Birmingham.,contextual proximity", "to": "socace_research", "width": 1.75}, {"from": "soc ace", "title": "The text mentions that SOC ACE is managed by the University of Birmingham, working in collaboration with a number of leading research organizations and through consultation and engagement with key stakeholders, as evident from the sentence \u0027SOC ACE is managed by the University of Birmingham, working in collaboration with a number of leading research organizations and through consultation and engagement with key stakeholders.\u0027,contextual proximity", "to": "stakeholders", "width": 2.5}, {"from": "soc ace", "title": "The Ultimate Beneficial Owner (UBO) is a person who ultimately owns or controls a legal entity, which may be involved in Serious Organised Crime Anti -Corruption Evidence (SOC ACE), including corruption and organised crime.,contextual proximity", "to": "ubo", "width": 2.25}, {"from": "soc ace", "title": "contextual proximity", "to": "ukraine", "width": 1.25}, {"from": "soc ace", "title": "The text mentions that SOC ACE is managed by the University of Birmingham, working in collaboration with a number of leading research organizations and through consultation and engagement with key stakeholders, as evident from the sentence \u0027SOC ACE is managed by the University of Birmingham, working in collaboration with a number of leading research organizations and through consultation and engagement with key stakeholders.\u0027,The SOC ACE is a research department located within the School of Government at the University of Birmingham.,contextual proximity", "to": "university of birmingham", "width": 5.75}, {"from": "southern russia", "title": "The war has resulted in thousands of fighters crossing the Ukraine-Russia border in both directions, contributing to sharp rises in drug and arms trafficking and criminal activities in southern Russia.,contextual proximity", "to": "ukraine border", "width": 2.0}, {"from": "stakeholders", "title": "contextual proximity", "to": "university of birmingham", "width": 0.5}, {"from": "supply and market links", "title": "Supply and market links have been shattered.", "to": "shattered", "width": 1.0}, {"from": "trade", "title": "contextual proximity", "to": "ukrainian government", "width": 0.5}, {"from": "transactions", "title": "contextual proximity", "to": "ukrainian amber", "width": 0.5}, {"from": "transnational crime", "title": "The annexation of Crimea by Russia and the ongoing conflict in eastern Ukraine have led to a rise in transnational crime in the region, as noted by Galeotti (2014a).,contextual proximity", "to": "ukraine", "width": 2.25}, {"from": "transnational crime", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 2.0}, {"from": "transnational crime", "title": "contextual proximity", "to": "world\u0027s underworld", "width": 1.0}, {"from": "ukraine", "title": "contextual proximity", "to": "ukraine\u0027s political and economic leaders", "width": 0.5}, {"from": "ukraine", "title": "contextual proximity", "to": "viktor medvedchuk", "width": 0.5}, {"from": "ukraine", "title": "contextual proximity", "to": "war in ukraine", "width": 1.25}, {"from": "ukraine", "title": "The widespread corruption in Ukraine is highlighted by Kosicki and Nesterenko (2014) as contributing to weak governance, which also contributes to conflict drivers in Luhansk and Donetsk.", "to": "weak governance", "width": 1.0}, {"from": "ukraine\u0027s gangsters", "title": "contextual proximity", "to": "ukraine\u0027s political and economic leaders", "width": 0.5}, {"from": "ukraine\u0027s political and economic leaders", "title": "contextual proximity", "to": "weak governance", "width": 0.5}, {"from": "viktor medvedchuk", "title": "contextual proximity", "to": "world\u0027s underworld", "width": 0.5}, {"from": "war in ukraine\u0027s donbas", "title": "The war in Ukraine\u0027s Donbas plunged an economically troubled region into ruin.", "to": "economically troubled region", "width": 1.0}, {"from": "yanukovych", "title": "contextual proximity", "to": "yanukovych\u2019s administration", "width": 0.5}, {"from": "yanukovych", "title": "contextual proximity", "to": "yanukovych\u2019s party of the regions", "width": 0.5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.015,
+            "damping": 0.4,
+            "gravitationalConstant": -31,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
