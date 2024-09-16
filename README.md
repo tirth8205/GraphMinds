@@ -11,7 +11,7 @@ GraphMinds addresses the challenges of processing unstructured data and leveragi
 
 Initially developed as a Local Retrieval-Augmented Generation (RAG) system, GraphMinds evolved to tackle the limitations of handling unstructured data by utilising knowledge graphs (KGs) to structure information. This enables the system to infer and represent indirect relationships, enhancing the capabilities of Large Language Models (LLMs) in processing fragmented and complex datasets.
 
-GraphMinds integrates advanced graph-based techniques with LLMs, facilitating the capture of indirect relationships within a knowledge graph. This unique approach improves the system's ability to analyse unstructured data, offering deeper insights and enhanced security for knowledge-intensive tasks. 
+GraphMinds integrates advanced graph-based techniques with LLMs, facilitating the capture of indirect relationships within a knowledge graph. This unique approach improves the system's ability to analyse unstructured data, offering deeper insights and enhanced security for knowledge-intensive tasks.
 
 Evaluations demonstrate GraphMinds' superiority in analyzing large, unstructured datasets, particularly in fields requiring comprehensive analysis, such as criminal investigations. This innovation underscores its potential as a powerful tool for secure and transparent data analysis.
 
@@ -30,25 +30,24 @@ Evaluations demonstrate GraphMinds' superiority in analyzing large, unstructured
 - **Ollama Client**: For interacting with the LLM.
 - **Pandas**: For data manipulation and handling relationships.
 
-
 ## Installation
 
 ### 1. Clone the repository:
-   ```bash
-   git clone https://github.com/tirth8205/GraphMinds.git
-   cd GraphMinds
-   ```
+```bash
+git clone https://github.com/tirth8205/GraphMinds.git
+cd GraphMinds
+```
 
 ### 2. Create and activate the Conda environment from the `environment.yml` file:
-   ```bash
-   conda env create -f environment.yml
-   conda activate graphminds
-   ```
+```bash
+conda env create -f environment.yml
+conda activate graphminds
+```
 
 ### 3. Verify the installation by checking the installed packages:
-   ```bash
-   conda list
-   ```
+```bash
+conda list
+```
 
 ### 4. Setting Up Ollama
 
@@ -80,27 +79,26 @@ To use the Ollama API:
    This will list all the available models that are ready to use with the project.
 
 ### 5. Launch JupyterLab (Optional):
-   If you're planning to work in JupyterLab, you can start it with:
-   ```bash
-   jupyter lab
-   ```
+If you're planning to work in JupyterLab, you can start it with:
+```bash
+jupyter lab
+```
 
 ### 6. Deactivating the Environment:
-   Once you're done, you can deactivate the Conda environment by running:
-   ```bash
-   conda deactivate
-   ```
+Once you're done, you can deactivate the Conda environment by running:
+```bash
+conda deactivate
+```
 
 ### Notes:
 - If you need to install additional packages, you can do so within the activated environment using `conda install` or `pip install`.
 - The Python version is not fixed in the environment file, so the latest compatible version of Python will be installed when the environment is created.
 
-
 ## Usage
 
 1. **Set Up the Environment**: After setting up the environment, open the `extract_graph.ipynb` Jupyter notebook and ensure the kernel is set to **Knowledge Graph** (the environment you just created).
 
-2. **Prepare Data**: 
+2. **Prepare Data**:
    - Place your PDF file in the `input/` folder (PDFs only at the moment).
    - Open the notebook and update the file name in the script:
 
@@ -111,7 +109,6 @@ To use the Ollama API:
    ```
 
 3. **Run the Notebook**: Execute the cells to process the PDF and generate the knowledge graph. Once the processing is done, the system will generate an interactive HTML file for querying the relationships within the document.
-
 
 4. **Example Query Script**:
    You can also run a predefined script to query the document:
@@ -140,8 +137,6 @@ To use the Ollama API:
 
    The script will continuously prompt for questions until you type `exit` or `quit`.
 
-
-
 ## System Architecture
 
 1. **Embedding Generation**: Generates sentence embeddings for each relationship in the dataset by combining node, edge, and context data.
@@ -161,6 +156,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 This project is developed by **Tirth Kanani** under the supervision of **Prof. Christopher Baber** as part of the MSc program in Human-Computer Interaction at the University of Birmingham. Special thanks to the developers of tools such as Sentence Transformers, NetworkX, and PyVis for their invaluable contributions.
 
-[GitHub Repository](https://github.com/tirth8205/GraphMinds.git)
+For more detailed insights and background on this project, you can access the full project report [here](https://bham-my.sharepoint.com/personal/txk316_student_bham_ac_uk/_layouts/15/guestaccess.aspx?share=EU-tWsvCYNRAl2pF0RFYdRcBpr_e64yTktVMrVpeUS4NNg&e=Xe8N7w).
 
----
+[GitHub Repository](https://github.com/tirth8205/GraphMinds.git)
