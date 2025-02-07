@@ -156,6 +156,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 This project is developed by **Tirth Kanani** under the supervision of **Prof. Christopher Baber** as part of the MSc program in Human-Computer Interaction at the University of Birmingham. Special thanks to the developers of tools such as Sentence Transformers, NetworkX, and PyVis for their invaluable contributions.
 
-For more detailed insights and background on this project, you can access the full project report [here](https://bham-my.sharepoint.com/personal/txk316_student_bham_ac_uk/_layouts/15/guestaccess.aspx?share=EU-tWsvCYNRAl2pF0RFYdRcBpr_e64yTktVMrVpeUS4NNg&e=Xe8N7w).
+For more detailed insights and background on this project, you can access the full project report [here](https://drive.google.com/file/d/1_iJALwvckB6mnuumzvUGzCoD9A4pN4Nk/view?usp=sharing).
 
 [GitHub Repository](https://github.com/tirth8205/GraphMinds.git)
