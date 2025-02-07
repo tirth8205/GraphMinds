@@ -94,6 +94,10 @@ conda deactivate
 - If you need to install additional packages, you can do so within the activated environment using `conda install` or `pip install`.
 - The Python version is not fixed in the environment file, so the latest compatible version of Python will be installed when the environment is created.
 
+## Prerequisite
+
+**⚠ Before running this script, first refer to the [Kernel Setup File](#) and set up the Jupyter kernel accordingly.**
+
 ## Usage
 
 1. **Set Up the Environment**: After setting up the environment, open the `extract_graph.ipynb` Jupyter notebook and ensure the kernel is set to **Knowledge Graph** (the environment you just created).
