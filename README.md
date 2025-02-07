@@ -96,7 +96,7 @@ conda deactivate
 
 ## Prerequisite
 
-**⚠ Before running this script, first refer to the [Kernel Setup File](#) and set up the Jupyter kernel accordingly.**
+**⚠ Before running this script, first refer to the [Kernel Setup File](https://github.com/tirth8205/GraphMinds/blob/main/Setting_up_Jupyter_Kernel.pdf) and set up the Jupyter kernel accordingly.**
 
 ## Usage
 
