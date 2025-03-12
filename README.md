@@ -15,6 +15,11 @@ GraphMinds integrates advanced graph-based techniques with LLMs, facilitating th
 
 Evaluations demonstrate GraphMinds' superiority in analyzing large, unstructured datasets, particularly in fields requiring comprehensive analysis, such as criminal investigations. This innovation underscores its potential as a powerful tool for secure and transparent data analysis.
 
+## Publication
+
+Our research paper is currently **under review** at **ACM SIGIR**.  
+You can view the preprint version [here](https://drive.google.com/file/d/1Vc2KWXx83qzQqNJz3T7lcJ95gj1BpZNb/view?usp=sharing).
+
 ## Key Features
 
 - **Graph-Based Relationship Mapping**: Extracts direct and indirect relationships between entities from unstructured data and represents them in a knowledge graph.
